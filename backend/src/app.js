@@ -63,6 +63,11 @@ app.use('/api/badges', badgeRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/users', userRoutes);
 
+// Root health-check — keeps Render's probe happy
+app.get('/', (_req, res) => {
+  res.json({ status: 'ok', service: 'StudyHive API' });
+});
+
 app.use((_req, res, next) => {
   res.status(404);
   next(new Error('Route not found'));
