@@ -48,7 +48,7 @@ class GeminiService {
     if (expectsJson) {
       // Return a valid empty/mock JSON structure that matches our most common needs
       if (prompt.includes('quiz')) return JSON.stringify({ quiz: [{ question: "Sample: What is StudyHive?", options: ["A platform", "A book", "A car", "A fruit"], correctAnswer: 0 }] });
-      if (prompt.includes('Masterclass')) return JSON.stringify({ topic: "General Study", youtubeQuery: "study skills", scenes: [{ teacherScript: "Welcome to your AI lesson. The AI is currently busy, but let's review basic study techniques.", title: "Lesson Active", icon: "📚", bulletPoints: ["Stay organized", "Focus on core concepts"] }] });
+      if (prompt.includes('visual lesson') || prompt.includes('Masterclass')) return JSON.stringify({ topic: "General Study", youtubeQuery: "study skills", scenes: [{ teacherScript: "Welcome to your AI lesson. The AI is currently busy, but let's review basic study techniques.", title: "Lesson Active", icon: "📚", bulletPoints: ["Stay organized", "Focus on core concepts"] }] });
       return JSON.stringify({});
     }
     return "Honey AI is currently resting due to high hive activity. Here is a study tip: Break your work into 25-minute Pomodoro sessions!";
