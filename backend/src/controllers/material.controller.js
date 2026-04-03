@@ -151,7 +151,7 @@ const createMaterial = asyncHandler(async (req, res) => {
   const fileType = fileExt.replace('.', '').toUpperCase();
   const fileSize = req.file.size || 0;
 
-  // Askuala AI — generate Smart Summary (never crashes upload)
+  // Honey AI — generate Smart Summary (never crashes upload)
   let aiData = { aiSummary: null, aiKeyTerms: [], aiQuiz: [] };
   try {
     aiData = await generateSmartSummary(fileUrl, title);

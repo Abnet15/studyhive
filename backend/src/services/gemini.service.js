@@ -1,30 +1,55 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const config = require('../config/env');
 
+// We use the same exact array that succeeded in the server background diagnostics.
+const MODEL_HIERARCHY = [
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-pro',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b'
+];
+
 class GeminiService {
   constructor() {
     if (!config.ai.geminiApiKey) {
       console.warn('GEMINI_API_KEY is not defined in .env! AI features will fail.');
     }
     this.genAI = new GoogleGenerativeAI(config.ai.geminiApiKey || 'dummy_key');
-    this.model = this.genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
-      generationConfig: { responseMimeType: "application/json" }
-    });
+  }
+
+  // Common fallback execution method mapping backend architecture
+  async runWithFallback(prompt, expectsJson = false) {
+    let lastError = null;
+    for (const modelName of MODEL_HIERARCHY) {
+      try {
+        const payload = { model: modelName };
+        if (expectsJson) payload.generationConfig = { responseMimeType: "application/json" };
+        
+        const model = this.genAI.getGenerativeModel(payload);
+        const result = await model.generateContent(prompt);
+        return result.response.text();
+      } catch (err) {
+        lastError = err;
+        console.warn(`[GeminiService] ${modelName} failed: ${err.message}. Trying next...`);
+      }
+    }
+    throw new Error(`All fallback Gemini models failed: ${lastError?.message}`);
   }
 
   async generateQuiz(topic, difficulty = 'medium') {
     const prompt = `Generate a quiz about the topic "${topic}" with difficulty "${difficulty}". 
     Exactly 5 questions.
-    Return a JSON object with a "quiz" array. Each item:
+    Return a strict JSON object with a "quiz" array. Each item:
     - "question": string
     - "options": array of strings (4 options)
     - "correctAnswer": integer (0-3) index.`;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const text = result.response.text();
-      return JSON.parse(text);
+      const text = await this.runWithFallback(prompt, true);
+      // Clean possible markdown JSON wrappers just in case
+      const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      return JSON.parse(cleanedText);
     } catch (err) {
       console.error('[GeminiService] Quiz Generation Error:', err);
       throw new Error('Could not generate quiz.');
@@ -37,8 +62,8 @@ class GeminiService {
     Format: Plain text, bullet points. Be brief but specific.`;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      return { recommendation: result.response.text() };
+      const text = await this.runWithFallback(prompt);
+      return { recommendation: text };
     } catch (err) {
       console.error('[GeminiService] Recommendations Error:', err);
       throw new Error('Could not fetch recommendations.');
@@ -50,8 +75,8 @@ class GeminiService {
     Analyze the above course material. Provide a clear, structured summary and explain the core concepts as if you were a helpful tutor.`;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      return { analysis: result.response.text() };
+      const text = await this.runWithFallback(prompt);
+      return { analysis: text };
     } catch (err) {
       console.error('[GeminiService] Analysis Error:', err);
       throw new Error('Could not analyze file.');
@@ -59,18 +84,40 @@ class GeminiService {
   }
 
   async chat(message, contextData = {}) {
-    // Basic chat state for context augmentation
     const prompt = `You are "Honey", a helpful AI study assistant for university students. 
     Context: ${JSON.stringify(contextData)}
     User: ${message}
     Honey:`;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      return { reply: result.response.text() };
+      const text = await this.runWithFallback(prompt);
+      return { reply: text };
     } catch (err) {
       console.error('[GeminiService] Chat Error:', err);
       throw new Error('AI lost its connection to the hive.');
+    }
+  }
+
+  async generateMasterclass(topic) {
+    const prompt = `You are the world's greatest practical tutor (like from Khan Academy or CrashCourse).
+    Create a highly engaging, practical visual lesson about: "${topic}".
+    
+    Return strict JSON matching this format EXACTLY:
+    {
+      "teacherScript": "An enthusiastic, engaging spoken script that explains this practically. Speak directly to the student in 1st person. Make it 2-3 paragraphs. Explain an analogy.",
+      "visualSlides": [
+        { "title": "Slide concept", "icon": "Emoji representation", "codeSnippet": "Optional practical code or formula to display", "bulletPoints": ["Point 1", "Point 2"] }
+      ],
+      "youtubeQuery": "A highly targeted YouTube search query to find the best real video tutorial for this topic"
+    }`;
+
+    try {
+      const text = await this.runWithFallback(prompt, true);
+      const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      return JSON.parse(cleaned);
+    } catch (err) {
+      console.error('[GeminiService] Masterclass Generation Error:', err);
+      throw new Error('Could not generate the interactive masterclass.');
     }
   }
 }

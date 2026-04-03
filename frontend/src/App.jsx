@@ -19,6 +19,7 @@ import Settings from './pages/Settings';
 import AboutUs from './pages/AboutUs';
 import Admin from './pages/Admin';
 import AIAssistant from './pages/AIAssistant';
+import MasterclassPlayer from './pages/MasterclassPlayer';
 
 function AuthGate({ children, fallback }) {
   const { authLoading } = useAuth();
@@ -70,6 +71,7 @@ function AppRoutes() {
               <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
               <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
               <Route path="/ai-assistant" element={<PrivateRoute><AIAssistant /></PrivateRoute>} />
+              <Route path="/masterclass/:id" element={<PrivateRoute><MasterclassPlayer /></PrivateRoute>} />
             </Routes>
           </AuthGate>
         </main>

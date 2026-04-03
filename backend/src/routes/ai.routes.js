@@ -3,7 +3,8 @@ const {
   getRecommendations, 
   generateQuiz, 
   analyzeFile,
-  chat
+  chat,
+  generateMasterclass
 } = require('../controllers/ai.controller');
 const { requireAuth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -14,5 +15,6 @@ router.get('/recommendations', requireAuth, getRecommendations);
 router.post('/generate-quiz', requireAuth, generateQuiz);
 router.post('/analyze-file', requireAuth, upload.single('file'), analyzeFile);
 router.post('/chat', requireAuth, chat);
+router.post('/masterclass', requireAuth, generateMasterclass);
 
 module.exports = router;

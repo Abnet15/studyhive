@@ -53,3 +53,15 @@ exports.chat = async (req, res, next) => {
     next(new ApiError(500, err.message));
   }
 };
+
+exports.generateMasterclass = async (req, res, next) => {
+  try {
+    const { topic } = req.body;
+    if (!topic) throw new ApiError(400, 'Topic is required to generate a Masterclass lesson');
+
+    const data = await geminiService.generateMasterclass(topic);
+    res.json(data);
+  } catch (err) {
+    next(new ApiError(500, err.message));
+  }
+};

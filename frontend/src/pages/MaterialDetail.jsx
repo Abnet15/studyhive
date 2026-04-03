@@ -8,7 +8,7 @@ import { useToast } from '../components/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, DownloadCloud, Share2, Sparkles, BrainCircuit, 
-  FileText, Calendar, HardDrive, UserCircle, Star, BadgeCheck, Bookmark, BookmarkCheck
+  FileText, Calendar, HardDrive, UserCircle, Star, BadgeCheck, Bookmark, BookmarkCheck, PlayCircle
 } from 'lucide-react';
 import { apiClient } from '../services/apiClient';
 
@@ -245,6 +245,12 @@ const MaterialDetail = () => {
                      {bookmarked ? <BookmarkCheck className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
                    </button>
                 </div>
+                {hasAI && (
+                  <button onClick={() => navigate(`/masterclass/${encodeURIComponent(material.title)}`)} className="btn-secondary py-4 w-full flex items-center justify-center border-indigo-500/30 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:text-white hover:bg-indigo-500 hover:border-indigo-500 transition-all shadow-md mt-2 relative overflow-hidden group">
+                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                     <PlayCircle className="w-5 h-5 mr-2" /> Start AI Masterclass
+                  </button>
+                )}
                 <div className="text-center text-sm font-bold text-slate-500 dark:text-slate-400 mt-2">
                    {material.downloads} total downloads
                 </div>
