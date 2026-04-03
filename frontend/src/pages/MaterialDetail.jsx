@@ -8,8 +8,9 @@ import { useToast } from '../components/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, DownloadCloud, Share2, Sparkles, BrainCircuit, 
-  FileText, Calendar, HardDrive, UserCircle, Star, BadgeCheck
+  FileText, Calendar, HardDrive, UserCircle, Star, BadgeCheck, Bookmark, BookmarkCheck
 } from 'lucide-react';
+import { apiClient } from '../services/apiClient';
 
 const MaterialDetail = () => {
   const { id } = useParams();
@@ -21,6 +22,8 @@ const MaterialDetail = () => {
   
   const [activeTab, setActiveTab] = useState('summary'); // 'summary', 'keyterms', 'quiz'
   const [ratingHover, setRatingHover] = useState(0);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
   const material = materials.find((m) => String(m.id) === String(id));
 
@@ -86,6 +89,48 @@ const MaterialDetail = () => {
     } else {
       navigator.clipboard.writeText(window.location.href);
       toast.success('Link copied to clipboard!');
+    }
+  };
+
+  React.useEffect(() => {
+    let mounted = true;
+    const checkBookmark = async () => {
+      if (!user) return;
+      try {
+        const data = await apiClient.get(`/materials/${material.id}`);
+        if (mounted && data.material) {
+          setBookmarked(data.material.bookmarked);
+        }
+      } catch (err) {
+        console.error('Failed to fetch material details', err);
+      }
+    };
+    checkBookmark();
+    return () => { mounted = false; };
+  }, [material.id, user]);
+
+  const handleBookmark = async () => {
+    if (!user) {
+      toast.error('You must be logged in to bookmark.');
+      return;
+    }
+    setBookmarkLoading(true);
+    try {
+      // Optimistic UI update
+      const previousState = bookmarked;
+      setBookmarked(!previousState);
+      
+      const { token } = JSON.parse(localStorage.getItem('studyhive_token') || '{"token":null}') || { token: localStorage.getItem('studyhive_token') };
+      const authToken = typeof token === 'string' ? token : localStorage.getItem('studyhive_token');
+      
+      const data = await apiClient.post(`/materials/${material.id}/bookmark`, { action: 'toggle' }, { token: authToken });
+      setBookmarked(data.bookmarked);
+      toast.success(data.bookmarked ? 'Bookmarked!' : 'Bookmark removed');
+    } catch (error) {
+      setBookmarked(!bookmarked); // Revert on failure
+      toast.error(error.message || 'Failed to update bookmark');
+    } finally {
+      setBookmarkLoading(false);
     }
   };
 
@@ -184,9 +229,22 @@ const MaterialDetail = () => {
                 <button onClick={handleDownload} className="btn-primary py-5 text-lg w-full flex items-center justify-center shadow-xl shadow-primary-500/20">
                   <DownloadCloud className="w-6 h-6 mr-2" /> Download File
                 </button>
-                <button onClick={handleShare} className="btn-secondary py-5 text-lg w-full flex items-center justify-center">
-                  <Share2 className="w-5 h-5 mr-2" /> Share Link
-                </button>
+                <div className="flex gap-3">
+                   <button onClick={handleShare} className="btn-secondary py-4 flex-1 flex items-center justify-center">
+                     <Share2 className="w-5 h-5 mr-2" /> Share
+                   </button>
+                   <button 
+                     onClick={handleBookmark}
+                     disabled={bookmarkLoading}
+                     className={`py-4 px-5 rounded-2xl font-bold transition-all duration-300 flex items-center justify-center border ${
+                       bookmarked 
+                         ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-600' 
+                         : 'bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-500 hover:text-amber-500 hover:border-amber-300'
+                     }`}
+                   >
+                     {bookmarked ? <BookmarkCheck className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
+                   </button>
+                </div>
                 <div className="text-center text-sm font-bold text-slate-500 dark:text-slate-400 mt-2">
                    {material.downloads} total downloads
                 </div>
