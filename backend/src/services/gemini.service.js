@@ -1,13 +1,14 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const config = require('../config/env');
 
-// We use the same exact array that succeeded in the server background diagnostics.
+// Updated model hierarchy — ordered by free-tier availability
+// gemini-1.5-flash removed (404 deprecated from v1beta)
 const MODEL_HIERARCHY = [
-  'gemini-flash-latest',
-  'gemini-pro-latest',
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash'
+  'gemini-2.0-flash-lite',    // Highest free-tier quota
+  'gemini-2.5-flash',          // 20 req/day free
+  'gemini-2.0-flash',          // Good fallback
+  'gemini-1.5-flash-8b',      // Smaller, separate quota bucket
+  'gemini-flash-latest',       // Alias fallback
 ];
 
 class GeminiService {
@@ -18,13 +19,20 @@ class GeminiService {
     this.genAI = new GoogleGenerativeAI(config.ai.geminiApiKey || 'dummy_key');
   }
 
-  // Common fallback execution method mapping backend architecture
+  // Parse the retryDelay seconds from a 429 error message
+  _parseRetryDelay(errMessage) {
+    const match = errMessage.match(/retry in (\d+(\.\d+)?)s/i);
+    if (match) return Math.min(parseFloat(match[1]) * 1000, 4000); // cap at 4s
+    return 0;
+  }
+
+  // Common fallback execution method
   async runWithFallback(prompt, expectsJson = false) {
     let lastError = null;
     for (const modelName of MODEL_HIERARCHY) {
       try {
         const payload = { model: modelName };
-        if (expectsJson && (modelName.includes('1.5') || modelName.includes('2.0') || modelName.includes('2.5') || modelName.includes('latest'))) {
+        if (expectsJson && (modelName.includes('1.5') || modelName.includes('2.0') || modelName.includes('2.5') || modelName.includes('lite') || modelName.includes('latest'))) {
           payload.generationConfig = { responseMimeType: "application/json" };
         }
         
@@ -34,12 +42,20 @@ class GeminiService {
         const text = response.text();
         
         if (!text) throw new Error("Empty response from AI");
+        console.log(`[GeminiService] Success using ${modelName}`);
         return text;
       } catch (err) {
         lastError = err;
         console.warn(`[GeminiService] ${modelName} failed: ${err.message}`);
-        // If it's a quota issue, we might want to skip other models if they share same quota, 
-        // but we'll try the next anyway because sometimes different models have different buckets.
+        // If 429 rate limit, wait the suggested retry time before trying next model
+        if (err.message.includes('429')) {
+          const delay = this._parseRetryDelay(err.message);
+          if (delay > 0) {
+            console.log(`[GeminiService] Waiting ${delay}ms before next model...`);
+            await new Promise(r => setTimeout(r, delay));
+          }
+        }
+        // If 404 (model doesn't exist), skip immediately
       }
     }
 
