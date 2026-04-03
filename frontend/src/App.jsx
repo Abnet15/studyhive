@@ -18,6 +18,7 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import AboutUs from './pages/AboutUs';
 import Admin from './pages/Admin';
+import AIAssistant from './pages/AIAssistant';
 
 function AuthGate({ children, fallback }) {
   const { authLoading } = useAuth();
@@ -62,12 +63,13 @@ function AppRoutes() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-              <Route path="/courses" element={<CourseExplorer />} />
+              <Route path="/courses" element={<PrivateRoute><CourseExplorer /></PrivateRoute>} />
               <Route path="/materials/:id" element={<MaterialDetail />} />
               <Route path="/upload" element={<PrivateRoute><Upload /></PrivateRoute>} />
               <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
               <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
               <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+              <Route path="/ai-assistant" element={<PrivateRoute><AIAssistant /></PrivateRoute>} />
             </Routes>
           </AuthGate>
         </main>

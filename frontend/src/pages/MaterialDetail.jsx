@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useMaterials } from '../context/MaterialContext';
 import { useCourses } from '../context/CourseContext';
 import { useToast } from '../components/Toast';
+import aiService from '../services/aiService';
+import { useState } from 'react';
 
 const MaterialDetail = () => {
   const { id } = useParams();
@@ -14,6 +16,10 @@ const MaterialDetail = () => {
   const { courses } = useCourses();
   const toast = useToast();
   const material = materials.find((m) => m.id === parseInt(id, 10));
+  
+  const [explanation, setExplanation] = useState('');
+  const [explaining, setExplaining] = useState(false);
+  const { token } = useAuth();
 
   if (materialsLoading) {
     return (
@@ -104,6 +110,18 @@ const MaterialDetail = () => {
     } else if (navigator.clipboard) {
       navigator.clipboard.writeText(window.location.href);
       toast.success('Link copied to clipboard!');
+    }
+  };
+
+  const handleAIExplain = async () => {
+    setExplaining(true);
+    try {
+      const resp = await aiService.explain({ materialId: material.id }, token);
+      setExplanation(resp.explanation);
+    } catch (err) {
+      toast.error('Failed to get AI explanation');
+    } finally {
+      setExplaining(false);
     }
   };
 
@@ -206,6 +224,51 @@ const MaterialDetail = () => {
             <button onClick={handleShare} className="btn-secondary flex-1">
               🔗 Share
             </button>
+          </div>
+          
+          {/* AI Explanation Section */}
+          <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+             <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                   🤖 AI Smart Guide
+                </h2>
+                {!explanation && (
+                  <button 
+                    onClick={handleAIExplain} 
+                    disabled={explaining}
+                    className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:underline disabled:opacity-50"
+                  >
+                    {explaining ? '🪄 Analyzing...' : '✨ Generate Explanation'}
+                  </button>
+                )}
+             </div>
+
+             {explanation ? (
+               <div className="bg-primary-50 dark:bg-primary-900/10 p-6 rounded-2xl border border-primary-100 dark:border-primary-800/50">
+                  <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                     <p className="whitespace-pre-line">{explanation}</p>
+                  </div>
+                  <button 
+                    onClick={() => setExplanation('')}
+                    className="mt-4 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  >
+                    Clear explanation
+                  </button>
+               </div>
+             ) : (
+               <div className="p-8 text-center bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">
+                    Confused by this material? Let our AI break it down for you.
+                  </p>
+                  <button 
+                    onClick={handleAIExplain}
+                    disabled={explaining}
+                    className="btn-secondary py-2 px-6 text-sm"
+                  >
+                    {explaining ? '🪄 Working magic...' : 'Explain with AI'}
+                  </button>
+               </div>
+             )}
           </div>
         </div>
 
