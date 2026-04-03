@@ -1,12 +1,33 @@
 const geminiService = require('../services/gemini.service');
 const ApiError = require('../utils/ApiError');
+const Bookmark = require('../models/Bookmark.model');
+const Material = require('../models/Material.model');
+const { extractTextFromFile } = require('../utils/ai');
+const path = require('path');
 
 exports.getRecommendations = async (req, res, next) => {
   try {
-    // Basic user-based recommendations
+    // Fetch user bookmarks to get their core StudyHive topics
+    const bookmarks = await Bookmark.find({ user_id: req.user.id }).populate('material_id');
+    
+    // Aggregate all AI topics from the materials the user is engaging with
+    let learnedTopics = [];
+    bookmarks.forEach(bm => {
+      if (bm.material_id && bm.material_id.aiTopics) {
+        learnedTopics.push(...bm.material_id.aiTopics);
+      }
+    });
+
+    // Make the list unique and fallback to their academic year if blank
+    const uniqueTopics = [...new Set(learnedTopics)].slice(0, 10);
+    const contextStr = uniqueTopics.length > 0 
+      ? `They are currently studying specific topics: ${uniqueTopics.join(', ')}.`
+      : `They are a ${req.user.academic_year} student.`;
+
     const data = await geminiService.getRecommendations({ 
       userEmail: req.user.email,
-      academicYear: req.user.academic_year
+      academicYear: req.user.academic_year,
+      aiKnownTopics: contextStr
     });
     res.json(data);
   } catch (err) {
@@ -30,10 +51,15 @@ exports.analyzeFile = async (req, res, next) => {
   try {
     if (!req.file) throw new ApiError(400, 'No file uploaded for analysis');
     
-    // In a real app, read the file buffer and use pdf-parse/mammoth
-    // For now, use the filename as context
+    const fileUrl = req.file.path; // from multer
+    const extractedText = await extractTextFromFile(fileUrl);
+    
+    if (!extractedText || extractedText.trim().length === 0) {
+       throw new ApiError(400, "Could not extract text from the file.");
+    }
+
     const data = await geminiService.analyzeMaterial(
-      `Analyzing material: ${req.file.originalname}`,
+      extractedText,
       req.file.originalname
     );
     res.json(data);

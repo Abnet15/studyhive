@@ -25,7 +25,7 @@ async function generateWithFallback(prompt) {
 
   for (const modelName of MODEL_HIERARCHY) {
     try {
-      console.log(`[Honey AI] Attempting generation with model: ${modelName} `);
+      console.log(`[Honey AI] Attempting generation with model: ${modelName}`);
       const model = genAI.getGenerativeModel({ model: modelName });
       
       const result = await model.generateContent(prompt);
@@ -36,7 +36,7 @@ async function generateWithFallback(prompt) {
       return text;
       
     } catch (err) {
-      console.warn(`[Honey AI] Error using ${modelName}: ${err.message}. Falling back to next best model...`);
+      console.warn(`[Honey AI] Error using ${modelName}: ${err.message}. Falling back...`);
     }
   }
 
@@ -45,9 +45,8 @@ async function generateWithFallback(prompt) {
 
 async function extractTextFromFile(fileUrl) {
   try {
-    // If it's a local mock test or relative path fallback
     if (!fileUrl.startsWith('http')) {
-      return "No valid HTTP URL provided for extraction.";
+      return "";
     }
 
     const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
@@ -57,7 +56,6 @@ async function extractTextFromFile(fileUrl) {
       const data = await pdfParse(dataBuffer);
       return data.text;
     } else {
-      // Basic text read for .txt or other extensions
       return dataBuffer.toString('utf8');
     }
   } catch (err) {
@@ -67,7 +65,8 @@ async function extractTextFromFile(fileUrl) {
 }
 
 /**
- * Parses file and automatically generates Smart Summary
+ * Parses file and generates: Summary, Key Terms, Topics, Quiz, and Content Validation
+ * Quiz questions are STRICTLY derived from the actual file content.
  */
 const generateSmartSummary = async (filePath, title) => {
   if (!genAI) {
@@ -75,28 +74,58 @@ const generateSmartSummary = async (filePath, title) => {
     return {
       aiSummary: `This is a mock AI summary for ${title} because no GEMINI_API_KEY is detected.`,
       aiKeyTerms: [title, 'Mock', 'Honey', 'AI'],
+      aiTopics: ['General Education'],
+      aiContentValid: true,
       aiQuiz: []
     };
   }
 
   const fileText = await extractTextFromFile(filePath);
+  const truncatedText = fileText.substring(0, 100000);
   
-  // Truncate text if it's too long to prevent throwing crazy context limit errors
-  // gemini-1.5 models support 1M+ tokens, so truncation at 100k chars is well within limit
-  const truncatedText = fileText.substring(0, 100000); 
+  // If file is empty or too short, mark as invalid
+  if (!truncatedText || truncatedText.trim().length < 50) {
+    console.warn('[Honey AI] File content too short or empty. Marking as potentially invalid.');
+    return {
+      aiSummary: 'The uploaded file appears to be empty or contains too little text for analysis.',
+      aiKeyTerms: [],
+      aiTopics: [],
+      aiContentValid: false,
+      aiQuiz: []
+    };
+  }
 
   const aiPrompt = `
-    You are an expert tutor for a university-level Edu-Tech platform. 
+    You are an expert tutor and content validator for a university-level Edu-Tech platform called "StudyHive".
     Analyze the following course material titled "${title}".
+    
+    CRITICAL RULES:
+    1. ALL quiz questions MUST be derived DIRECTLY from the actual content below. Do NOT invent questions about topics not in the text.
+    2. The summary must reflect what is ACTUALLY in the document.
+    3. Key terms must be REAL terms found in the document.
+    4. Topics must be high-level academic subjects this document covers (e.g., "Data Structures", "Organic Chemistry", "Microeconomics").
+    5. Content validation: Set "aiContentValid" to false ONLY if the text is clearly spam, gibberish, or completely non-educational.
     
     Return your response strictly in the following JSON format without Markdown blocks or extra text:
     {
-      "aiSummary": "A concise paragraph summarizing the material",
-      "aiKeyTerms": ["term1", "term2", "term3", "term4", "term5"],
+      "aiSummary": "A concise 2-3 sentence paragraph summarizing what this material actually teaches",
+      "aiKeyTerms": ["term1", "term2", "term3", "term4", "term5", "term6", "term7", "term8"],
+      "aiTopics": ["High-level subject 1", "High-level subject 2"],
+      "aiContentValid": true,
       "aiQuiz": [
         {
-          "question": "generate a multiple choice question",
-          "options": ["A", "B", "C", "D"],
+          "question": "A specific question whose answer is DIRECTLY found in the text above",
+          "options": ["Option A", "Option B", "Option C", "Option D"],
+          "answer": "The correct option exactly as it appears in the options array"
+        },
+        {
+          "question": "Another question derived from the content",
+          "options": ["Option A", "Option B", "Option C", "Option D"],
+          "answer": "The correct option exactly as it appears in the options array"
+        },
+        {
+          "question": "A third question derived from the content",
+          "options": ["Option A", "Option B", "Option C", "Option D"],
           "answer": "The correct option exactly as it appears in the options array"
         }
       ]
@@ -110,23 +139,31 @@ const generateSmartSummary = async (filePath, title) => {
 
   try {
     const rawResponse = await generateWithFallback(aiPrompt);
-    
-    // Clean markdown formatting if model adds it (e.g. ```json ... ```)
     let cleanedJsonString = rawResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-
-    return JSON.parse(cleanedJsonString);
+    const parsed = JSON.parse(cleanedJsonString);
+    
+    // Ensure all expected fields exist
+    return {
+      aiSummary: parsed.aiSummary || 'Summary not available.',
+      aiKeyTerms: Array.isArray(parsed.aiKeyTerms) ? parsed.aiKeyTerms : [],
+      aiTopics: Array.isArray(parsed.aiTopics) ? parsed.aiTopics : [],
+      aiContentValid: typeof parsed.aiContentValid === 'boolean' ? parsed.aiContentValid : true,
+      aiQuiz: Array.isArray(parsed.aiQuiz) ? parsed.aiQuiz : []
+    };
   } catch (error) {
     console.error('[Honey AI] Critical Error generating Smart Summary:', error);
     
-    // Graceful fallback
     return {
       aiSummary: 'AI was unable to generate a summary for this material due to an API error.',
       aiKeyTerms: [],
+      aiTopics: [],
+      aiContentValid: true,
       aiQuiz: []
     };
   }
 };
 
 module.exports = {
-  generateSmartSummary
+  generateSmartSummary,
+  extractTextFromFile
 };

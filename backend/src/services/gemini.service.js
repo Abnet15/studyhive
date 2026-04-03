@@ -59,6 +59,7 @@ class GeminiService {
   async getRecommendations(userStats) {
     const prompt = `Based on the following student state: ${JSON.stringify(userStats)}, 
     generate 3 concise, motivating study recommendations for today. 
+    Make sure to tailor the recommendations specifically based on the topics they have been studying.
     Format: Plain text, bullet points. Be brief but specific.`;
 
     try {

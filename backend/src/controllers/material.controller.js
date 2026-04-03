@@ -39,9 +39,11 @@ const mapMaterial = (item, extras = {}) => ({
   courseCode: item.course_id?.code || null,
   courseName: item.course_id?.title || null,
   uploaderName: item.uploader_id?.fullName || 'Unknown',
-  // Askuala AI
+  // Honey AI
   aiSummary: item.aiSummary || null,
   aiKeyTerms: item.aiKeyTerms || [],
+  aiTopics: item.aiTopics || [],
+  aiContentValid: item.aiContentValid !== false,
   aiQuiz: item.aiQuiz || [],
   // Extras (rating, bookmarked)
   ...extras,
@@ -58,6 +60,9 @@ const listMaterials = asyncHandler(async (req, res) => {
     query.$or = [
       { title: new RegExp(search, 'i') },
       { description: new RegExp(search, 'i') },
+      { aiKeyTerms: new RegExp(search, 'i') },
+      { aiTopics: new RegExp(search, 'i') },
+      { aiSummary: new RegExp(search, 'i') },
     ];
   }
 
@@ -152,10 +157,17 @@ const createMaterial = asyncHandler(async (req, res) => {
   const fileSize = req.file.size || 0;
 
   // Honey AI — generate Smart Summary (never crashes upload)
-  let aiData = { aiSummary: null, aiKeyTerms: [], aiQuiz: [] };
+  let aiData = { aiSummary: null, aiKeyTerms: [], aiTopics: [], aiContentValid: true, aiQuiz: [] };
   try {
     aiData = await generateSmartSummary(fileUrl, title);
+    
+    // CONTENT VALIDATION GATE
+    if (aiData.aiContentValid === false) {
+      // We could optionally delete the uploaded file here to save storage before throwing ApiError
+      throw new ApiError(400, "Honey AI determined this file is not valid educational material (spam, empty, or irrelevant).");
+    }
   } catch (err) {
+    if (err instanceof ApiError) throw err;
     console.error('[createMaterial] AI generation failed, saving without AI data:', err.message);
   }
 
