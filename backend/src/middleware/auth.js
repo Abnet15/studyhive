@@ -1,7 +1,7 @@
 const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 const { verifyToken } = require('../utils/jwt');
-const pool = require('../config/db');
+const User = require('../models/User.model');
 
 const getTokenFromRequest = (req) => {
   const authHeader = req.headers.authorization || '';
@@ -15,11 +15,9 @@ const getTokenFromRequest = (req) => {
 };
 
 const attachUser = async (userId) => {
-  const [rows] = await pool.query(
-    'SELECT id, full_name AS fullName, email, role FROM users WHERE id = ? AND is_active = 1 LIMIT 1',
-    [userId]
-  );
-  return rows[0];
+  const user = await User.findById(userId);
+  if (!user) return null;
+  return { id: user._id, fullName: user.fullName, email: user.email, role: user.role };
 };
 
 const requireAuth = asyncHandler(async (req, _res, next) => {
@@ -50,7 +48,6 @@ const requireAdmin = asyncHandler(async (req, res, next) => {
   next();
 });
 
-// Optional auth - attaches user if token is present, but doesn't fail if missing
 const optionalAuth = asyncHandler(async (req, _res, next) => {
   const token = getTokenFromRequest(req);
   if (token) {
@@ -72,4 +69,3 @@ module.exports = {
   requireAdmin,
   optionalAuth,
 };
-

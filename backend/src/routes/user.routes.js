@@ -11,7 +11,7 @@ router.get('/', requireAuth, requireAdmin, listUsers);
 router.patch(
   '/:id',
   [
-    param('id').isInt(),
+    param('id').isMongoId(),
     body('role').optional().isIn(['student', 'moderator', 'admin']),
     body('isActive').optional().isBoolean(),
   ],
@@ -23,7 +23,7 @@ router.patch(
 
 router.delete(
   '/:id',
-  [param('id').isInt()],
+  [param('id').isMongoId()],
   validateRequest,
   requireAuth,
   requireAdmin,

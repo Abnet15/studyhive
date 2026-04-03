@@ -19,7 +19,7 @@ const router = express.Router();
 router.get(
   '/',
   [
-    query('courseId').optional().isInt(),
+    query('courseId').optional().isMongoId(),
     query('type').optional().isIn(['material', 'exam', 'project', 'note']),
     query('search').optional().isString(),
     query('limit').optional().isInt({ min: 1, max: 500 }),
@@ -30,7 +30,7 @@ router.get(
   listMaterials
 );
 
-router.get('/:id', [param('id').isInt()], validateRequest, getMaterial);
+router.get('/:id', [param('id').isMongoId()], validateRequest, getMaterial);
 
 router.post(
   '/',
@@ -38,7 +38,7 @@ router.post(
   upload.single('file'),
   [
     body('title').notEmpty(),
-    body('courseId').isInt(),
+    body('courseId').isMongoId(),
     body('materialType').optional().isIn(['material', 'exam', 'project', 'note']),
   ],
   validateRequest,
@@ -48,7 +48,7 @@ router.post(
 router.patch(
   '/:id',
   [
-    param('id').isInt(),
+    param('id').isMongoId(),
     body('title').optional().isString(),
     body('description').optional().isString(),
     body('material_type').optional().isIn(['material', 'exam', 'project', 'note']),
@@ -60,13 +60,13 @@ router.patch(
   updateMaterial
 );
 
-router.delete('/:id', [param('id').isInt()], validateRequest, requireAuth, deleteMaterial);
+router.delete('/:id', [param('id').isMongoId()], validateRequest, requireAuth, deleteMaterial);
 
-router.post('/:id/download', [param('id').isInt()], validateRequest, optionalAuth, recordDownload);
+router.post('/:id/download', [param('id').isMongoId()], validateRequest, optionalAuth, recordDownload);
 
 router.post(
   '/:id/rate',
-  [param('id').isInt(), body('rating').isInt({ min: 1, max: 5 }), body('comment').optional().isString()],
+  [param('id').isMongoId(), body('rating').isInt({ min: 1, max: 5 }), body('comment').optional().isString()],
   validateRequest,
   requireAuth,
   rateMaterial
@@ -75,7 +75,7 @@ router.post(
 router.post(
   '/:id/bookmark',
   [
-    param('id').isInt(),
+    param('id').isMongoId(),
     body('action').optional().isIn(['add', 'remove', 'toggle']),
   ],
   validateRequest,

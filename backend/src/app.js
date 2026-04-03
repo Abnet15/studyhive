@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const rateLimit = require('express-rate-limit');
 
 const config = require('./config/env');
 const errorHandler = require('./middleware/errorHandler');
@@ -39,14 +40,26 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan(config.env === 'production' ? 'combined' : 'dev'));
 
-// Serve uploaded files statically
-app.use('/uploads', express.static(path.resolve(__dirname, '../uploads'), {
-  setHeaders: (res, filePath) => {
-    // Allow CORS for file downloads
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET');
-  },
-}));
+// Rate limiting — prevent abuse
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200,                  // limit each IP to 200 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { status: 'error', message: 'Too many requests, please try again later.' },
+});
+app.use('/api', apiLimiter);
+
+// Stricter limiter for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { status: 'error', message: 'Too many auth attempts, please try again later.' },
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+
+// Serve uploaded files statically - Removed (Now using Cloudinary CDN)
 
 app.get('/api/health', (_req, res) => {
   res.json({

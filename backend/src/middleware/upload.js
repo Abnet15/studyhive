@@ -1,56 +1,26 @@
-const path = require('path');
-const fs = require('fs');
 const multer = require('multer');
-const slugify = require('slugify');
-const config = require('../config/env');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('../config/cloudinary');
 
-const uploadsDir = path.resolve(__dirname, '../../uploads');
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    // Attempt to determine resource type based on mime type
+    let resource_type = 'auto'; // 'image', 'video', 'raw'
+    if (file.mimetype.includes('pdf') || file.mimetype.includes('document')) {
+      resource_type = 'raw';
+    } else if (file.mimetype.includes('image')) {
+      resource_type = 'image';
+    }
 
-// Ensure uploads directory exists
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (_req, file, cb) => {
-    const timestamp = Date.now();
-    const sanitized = slugify(file.originalname, { lower: true, strict: true }) || `file-${timestamp}`;
-    cb(null, `${timestamp}-${sanitized}`);
-  },
-});
-
-const allowedMimeTypes = [
-  'application/pdf',
-  'application/zip',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/msword',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'image/gif',
-];
-
-const fileFilter = (_req, file, cb) => {
-  if (allowedMimeTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Unsupported file type'), false);
-  }
-};
-
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: {
-    fileSize: config.upload.maxFileSizeMb * 1024 * 1024,
+    return {
+      folder: 'studyhive/materials',
+      resource_type: resource_type,
+      public_id: `${Date.now()}-${file.originalname.replace(/\.[^/.]+$/, "")}`
+    };
   },
 });
+
+const upload = multer({ storage: storage });
 
 module.exports = upload;
-

@@ -10,7 +10,7 @@ router.get('/', listBadges);
 
 router.post(
   '/award',
-  [body('badgeId').isInt(), body('userId').isInt()],
+  [body('badgeId').isMongoId(), body('userId').isMongoId()],
   validateRequest,
   requireAuth,
   requireAdmin,

@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
-const pool = require('../config/db');
+const User = require('../models/User.model');
+const Department = require('../models/Department.model');
 const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 const { signToken } = require('../utils/jwt');
@@ -7,12 +8,12 @@ const { signToken } = require('../utils/jwt');
 const normaliseEmail = (email = '') => email.trim().toLowerCase();
 
 const mapUser = (record) => ({
-  id: record.id,
-  fullName: record.full_name,
+  id: record._id || record.id,
+  fullName: record.fullName,
   email: record.email,
   role: record.role,
-  departmentId: record.department_id,
-  departmentName: record.department_name,
+  departmentId: record.department_id ? (record.department_id._id || record.department_id) : null,
+  departmentName: record.department_id ? record.department_id.name : null,
   academicYear: record.academic_year,
 });
 
@@ -22,46 +23,41 @@ const resolveDepartment = async (departmentId, departmentName) => {
   const cleanName = departmentName.trim();
   if (!cleanName) return null;
 
-  const [existing] = await pool.query(
-    'SELECT id FROM departments WHERE LOWER(name) = LOWER(?) LIMIT 1',
-    [cleanName]
-  );
-  if (existing.length) {
-    return existing[0].id;
+  const existing = await Department.findOne({ name: { $regex: new RegExp(`^${cleanName}$`, 'i') } });
+  if (existing) {
+    return existing._id;
   }
-  const [result] = await pool.query('INSERT INTO departments (name) VALUES (?)', [cleanName]);
-  return result.insertId;
+  const newDept = await Department.create({ name: cleanName });
+  return newDept._id;
 };
 
 const register = asyncHandler(async (req, res) => {
   const { fullName, email, password, departmentId, departmentName, academicYear } = req.body;
   const cleanEmail = normaliseEmail(email);
 
-  const [existing] = await pool.query('SELECT id FROM users WHERE email = ? LIMIT 1', [cleanEmail]);
-  if (existing.length) {
+  const existing = await User.findOne({ email: cleanEmail }).select('_id');
+  if (existing) {
     throw new ApiError(409, 'Email already registered');
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
   const resolvedDepartmentId = await resolveDepartment(departmentId, departmentName);
-  const [result] = await pool.query(
-    `INSERT INTO users (full_name, email, password_hash, department_id, academic_year, role)
-     VALUES (?, ?, ?, ?, ?, 'student')`,
-    [fullName.trim(), cleanEmail, passwordHash, resolvedDepartmentId, academicYear || null]
-  );
+  
+  const createdUser = await User.create({
+    fullName: fullName.trim(),
+    email: cleanEmail,
+    password_hash: passwordHash,
+    department_id: resolvedDepartmentId,
+    academic_year: academicYear || null,
+    role: 'student'
+  });
 
-  const [[created]] = await pool.query(
-    `SELECT u.id, u.full_name, u.email, u.role, u.department_id, u.academic_year, d.name AS department_name
-     FROM users u
-     LEFT JOIN departments d ON d.id = u.department_id
-     WHERE u.id = ?`,
-    [result.insertId]
-  );
+  const populatedUser = await User.findById(createdUser._id).populate('department_id');
 
-  const token = signToken({ sub: result.insertId, role: 'student' });
+  const token = signToken({ sub: createdUser._id, role: 'student' });
   res.status(201).json({
     token,
-    user: mapUser(created),
+    user: mapUser(populatedUser),
   });
 });
 
@@ -69,23 +65,8 @@ const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   const cleanEmail = normaliseEmail(email);
 
-  const [rows] = await pool.query(
-    `SELECT u.id,
-            u.full_name,
-            u.email,
-            u.password_hash,
-            u.role,
-            u.department_id,
-            u.academic_year,
-            d.name AS department_name
-     FROM users u
-     LEFT JOIN departments d ON d.id = u.department_id
-     WHERE u.email = ?
-     LIMIT 1`,
-    [cleanEmail]
-  );
-
-  const user = rows[0];
+  const user = await User.findOne({ email: cleanEmail }).populate('department_id');
+  
   if (!user) {
     throw new ApiError(401, 'Invalid credentials');
   }
@@ -95,9 +76,10 @@ const login = asyncHandler(async (req, res) => {
     throw new ApiError(401, 'Invalid credentials');
   }
 
-  await pool.query('UPDATE users SET last_login_at = NOW() WHERE id = ?', [user.id]);
+  user.last_login_at = new Date();
+  await user.save();
 
-  const token = signToken({ sub: user.id, role: user.role });
+  const token = signToken({ sub: user._id, role: user.role });
   res.json({
     token,
     user: mapUser(user),
@@ -105,77 +87,55 @@ const login = asyncHandler(async (req, res) => {
 });
 
 const profile = asyncHandler(async (req, res) => {
-  const [rows] = await pool.query(
-    `SELECT u.id,
-            u.full_name,
-            u.email,
-            u.role,
-            u.academic_year,
-            u.department_id,
-            d.name AS department_name
-     FROM users u
-     LEFT JOIN departments d ON d.id = u.department_id
-     WHERE u.id = ?
-     LIMIT 1`,
-    [req.user.id]
-  );
+  const user = await User.findById(req.user.id).populate('department_id');
 
-  if (!rows.length) {
+  if (!user) {
     throw new ApiError(404, 'User not found');
   }
 
   res.json({
-    user: mapUser(rows[0]),
+    user: mapUser(user),
   });
 });
 
 const changePassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
 
-  const [rows] = await pool.query('SELECT password_hash FROM users WHERE id = ? LIMIT 1', [req.user.id]);
-  if (!rows.length) {
+  const user = await User.findById(req.user.id).select('password_hash');
+  if (!user) {
     throw new ApiError(404, 'User not found');
   }
 
-  const match = await bcrypt.compare(currentPassword, rows[0].password_hash);
+  const match = await bcrypt.compare(currentPassword, user.password_hash);
   if (!match) {
     throw new ApiError(400, 'Current password is incorrect');
   }
 
   const newHash = await bcrypt.hash(newPassword, 10);
-  await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [newHash, req.user.id]);
+  user.password_hash = newHash;
+  await user.save();
 
   res.json({ message: 'Password changed successfully' });
 });
 
 const updateProfile = asyncHandler(async (req, res) => {
   const { fullName, academicYear } = req.body;
-  const updates = [];
-  const params = [];
+  const updateData = {};
 
   if (typeof fullName !== 'undefined' && fullName.trim()) {
-    updates.push('full_name = ?');
-    params.push(fullName.trim());
+    updateData.fullName = fullName.trim();
   }
   if (typeof academicYear !== 'undefined') {
-    updates.push('academic_year = ?');
-    params.push(academicYear ? Number(academicYear) : null);
+    updateData.academic_year = academicYear ? Number(academicYear) : null;
   }
 
-  if (!updates.length) {
+  if (Object.keys(updateData).length === 0) {
     return res.json({ message: 'Nothing to update' });
   }
 
-  params.push(req.user.id);
-  await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
+  const user = await User.findByIdAndUpdate(req.user.id, updateData, { new: true }).populate('department_id');
 
-  // Return updated profile
-  const [rows] = await pool.query(
-    `SELECT u.id, u.full_name, u.email, u.role, u.academic_year, u.department_id, d.name AS department_name
-     FROM users u LEFT JOIN departments d ON d.id = u.department_id WHERE u.id = ?`,
-    [req.user.id]
-  );
-  res.json({ message: 'Profile updated', user: mapUser(rows[0]) });
+  res.json({ message: 'Profile updated', user: mapUser(user) });
 });
 
 module.exports = {
@@ -185,4 +145,3 @@ module.exports = {
   changePassword,
   updateProfile,
 };
-

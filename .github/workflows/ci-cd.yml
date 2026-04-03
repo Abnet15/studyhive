@@ -1,0 +1,41 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+        
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+          
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+        
+    - name: Install dependencies (Backend)
+      run: cd backend && npm ci
+      
+    - name: Lint (Backend)
+      run: cd backend && npm run lint --if-present
+      
+    # Note: frontend test step can be added here if frontend is initialized
+    # - name: Install dependencies (Frontend)
+    #   run: cd frontend && npm ci

@@ -1,28 +1,27 @@
-# StudyHive Setup & Troubleshooting Guide
+# StudyHive Setup & Troubleshooting Guide 🐝
 
-## Quick Start
+## Quick Start (MongoDB + AI Update)
 
-### 1. Database Setup (XAMPP)
+### 1. Database Setup (MongoDB)
 
-1. Start XAMPP and ensure MySQL is running
-2. Open phpMyAdmin (http://localhost/phpmyadmin)
-3. Import the schema:
-   - Click "Import" tab
-   - Choose file: `backend/db/schema.sql`
-   - Click "Go"
-   - This creates the `studyhive` database with all tables and seed data
+StudyHive now runs on a modern **MongoDB NoSQL architecture**. 
+1. Install [MongoDB Community Edition](https://www.mongodb.com/try/download/community) or spin up a cluster on **MongoDB Atlas**.
+2. Make sure your MongoDB service is running (default port is `27017`).
+3. You NO LONGER need XAMPP or MySQL.
 
 ### 2. Backend Setup
 
 ```bash
 cd backend
 npm install
-cp env.example .env
-# Edit .env with your MySQL credentials if needed
+```
+
+Configure your environment variables carefully (see `.env` section below). 
+```bash
 npm run dev
 ```
 
-The backend will run on `http://localhost:5000`
+The backend runs on `http://localhost:5000`
 
 ### 3. Frontend Setup
 
@@ -34,153 +33,46 @@ npm run dev
 
 The frontend will run on `http://localhost:5173`
 
-## Login Credentials
+## Environment Variables (.env)
 
-See `backend/LOGIN_CREDENTIALS.md` for default user accounts.
+Critical variables needed for the modern architecture:
 
-**Quick Reference:**
-- **Admin:** `admin@studyhive.com` / `password`
-- **Alem:** `alem@example.com` / `password`
-- **Sara:** `sara@example.com` / `password`
+```env
+# MongoDB Connection
+MONGODB_URI=mongodb://localhost:27017/studyhive
+
+# JWT
+JWT_SECRET=your-super-secret-jwt-key-change-this
+PORT=5000
+
+# Cloudinary (REQUIRED FOR FILE UPLOADS)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+# Gemini AI API Key (REQUIRED FOR SMART SUMMARIES)
+GEMINI_API_KEY=your_gemini_api_key
+
+# Frontend URLs (for CORS)
+WEB_CLIENT_URL=http://localhost:5173
+```
 
 ## Common Issues & Fixes
 
-### Issue 1: "File download link is not available yet"
-
+### Issue 1: "File upload fails" or "Cannot read property 'path' of undefined"
 **Causes:**
-- File wasn't uploaded correctly
-- File path not set in database
-- Backend not serving static files
-
+- You did not configure Cloudinary in `.env`.
 **Fixes:**
-1. Check that `backend/uploads` directory exists
-2. Verify the file was uploaded (check `backend/uploads` folder)
-3. Check browser console for errors
-4. Verify backend is running on port 5000
-5. Check that file_path in database is `/uploads/filename`
+1. Create a free Cloudinary account.
+2. Add your `CLOUDINARY_*` keys to `backend/.env`.
 
-**Debug Steps:**
-```sql
--- Check if material has file_path
-SELECT id, title, file_path FROM course_materials WHERE id = <material_id>;
-```
-
-### Issue 2: Uploaded materials not showing
-
+### Issue 2: AI Summaries are returning "Mock Response"
 **Causes:**
-- Material not approved (should be auto-approved now)
-- Query not including user's materials
-- Frontend not refreshing after upload
-
+- The system could not detect your `GEMINI_API_KEY` or the key ran out of quota.
 **Fixes:**
-1. Check database:
-```sql
--- Check if material exists and is approved
-SELECT id, title, is_approved, is_public, uploader_id 
-FROM course_materials 
-ORDER BY uploaded_at DESC LIMIT 10;
-```
-
-2. Check browser console for API errors
-3. Verify you're logged in (materials fetch uses token)
-4. Refresh the page after upload
+1. Check `backend/.env`. 
+2. Ensure you have restarted the backend after pasting the key.
+3. Check `backend/src/utils/ai.js` to see the fallback logs in your console.
 
 ### Issue 3: Can't login
-
-**Causes:**
-- Database not set up
-- Wrong credentials
-- User not active
-
-**Fixes:**
-1. Verify database exists: `SHOW DATABASES;`
-2. Check users table: `SELECT email, role, is_active FROM users;`
-3. Verify password hash (all default passwords are `password`)
-4. Check user is active: `UPDATE users SET is_active = 1 WHERE email = 'your@email.com';`
-
-### Issue 4: CORS errors
-
-**Fixes:**
-1. Check `backend/.env` has correct `CLIENT_URL`
-2. Default should be: `CLIENT_URL=http://localhost:5173`
-3. Restart backend after changing `.env`
-
-### Issue 5: File upload fails
-
-**Causes:**
-- File too large (max 25MB default)
-- Unsupported file type
-- Uploads directory permissions
-
-**Fixes:**
-1. Check file size (max 25MB)
-2. Supported types: PDF, ZIP, DOCX, images (JPG, PNG, GIF)
-3. Ensure `backend/uploads` directory is writable
-4. Check backend console for multer errors
-
-## Database Queries for Debugging
-
-```sql
--- Check all materials
-SELECT cm.id, cm.title, cm.file_path, cm.is_approved, cm.is_public, 
-       u.full_name AS uploader, c.course_code
-FROM course_materials cm
-JOIN users u ON u.id = cm.uploader_id
-JOIN courses c ON c.id = cm.course_id
-ORDER BY cm.uploaded_at DESC;
-
--- Check users
-SELECT id, full_name, email, role, is_active FROM users;
-
--- Check if file exists (replace filename)
-SELECT * FROM course_materials WHERE file_path LIKE '%filename%';
-
--- Reset a user's password (replace hash with bcrypt hash of 'password')
-UPDATE users SET password_hash = '$2b$10$...' WHERE email = 'user@example.com';
-```
-
-## Testing Checklist
-
-- [ ] Database imported successfully
-- [ ] Backend starts without errors
-- [ ] Frontend starts without errors
-- [ ] Can login with admin account
-- [ ] Can login with test student accounts
-- [ ] Can upload a file
-- [ ] Uploaded file appears in dashboard
-- [ ] Uploaded file appears in profile
-- [ ] Uploaded file appears in course explorer
-- [ ] Can download uploaded file
-- [ ] File opens/downloads correctly
-
-## Environment Variables
-
-### Backend (.env)
-```env
-NODE_ENV=development
-PORT=5000
-CLIENT_URL=http://localhost:5173
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=
-DB_NAME=studyhive
-JWT_SECRET=your_secret_key_here
-UPLOAD_MAX_SIZE_MB=25
-```
-
-### Frontend (.env) - Optional
-```env
-VITE_API_URL=http://localhost:5000/api
-VITE_API_HOST=http://localhost:5000
-```
-
-## Still Having Issues?
-
-1. Check browser console (F12) for errors
-2. Check backend console for errors
-3. Verify MySQL is running in XAMPP
-4. Check that ports 5000 and 5173 are not in use
-5. Clear browser cache and localStorage
-6. Restart both backend and frontend
-
+All SQL credentials have been wiped! Since we moved to MongoDB, you will need to Register a brand new account using the frontend UI.
