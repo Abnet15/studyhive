@@ -145,7 +145,8 @@ const AIAssistant = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12 relative overflow-hidden min-h-screen">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] transition-colors duration-700 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 py-12 relative">
       <ConfettiAnimation trigger={quizFinished} />
       
       {/* Background Decor */}
@@ -429,6 +430,7 @@ const AIAssistant = () => {
            </motion.section>
         </div>
 
+      </div>
       </div>
     </div>
   );

@@ -62,7 +62,7 @@ function AppRoutes() {
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/about" element={<AboutUs />} />
-              <Route path="/honey-teacher" element={<HoneyTeacher />} />
+<Route path="/honey-teacher" element={<HoneyTeacher />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
