@@ -7,7 +7,8 @@ import Badge from '../components/Badge';
 import { useBadges, isBadgeEarned } from '../hooks/useBadges';
 import { useMaterials } from '../context/MaterialContext';
 import { useCourses } from '../context/CourseContext';
-import { BookOpen, Star, Download, Sparkles, ChevronRight, Robot } from 'lucide-react';
+import { BookOpen, Star, Download, Sparkles, ChevronRight, Bot } from 'lucide-react';
+import StudyPulse from '../components/StudyPulse';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -126,17 +127,22 @@ const Dashboard = () => {
              
              {/* AI Quick Suggestion */}
              <motion.div variants={itemVariants} className="glass-card p-8 bg-gradient-to-br from-slate-900 to-indigo-950 text-white border-none shadow-[0_20px_50px_-10px_rgba(14,165,233,0.4)] relative overflow-hidden">
-                <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary-500/30 rounded-full blur-3xl"></div>
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary-500/30 rounded-full blur-3xl opacity-30"></div>
                 <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-md border border-white/20">
                    <Sparkles className="w-7 h-7 text-primary-300" />
                 </div>
                 <h3 className="text-2xl font-bold mb-3 tracking-tight">AI Insights</h3>
                 <p className="text-slate-300 text-sm leading-relaxed mb-8">
-                   Based on your active semester, you should check out the newly generated AI Summaries for <b className="text-white">Operating Systems</b>!
+                   Based on your profile, we suggests checking out the AI Summaries for <b className="text-white">{user?.dept || 'Computing'}</b> courses!
                 </p>
                 <Link to="/ai-assistant" className="flex items-center justify-center w-full py-4 bg-white text-slate-900 font-bold rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
-                   Open AI Hub
+                   Generate Summary
                 </Link>
+             </motion.div>
+
+             {/* Study Pulse Heatmap */}
+             <motion.div variants={itemVariants}>
+                <StudyPulse user={user} />
              </motion.div>
 
              {/* Badges Hub */}

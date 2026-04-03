@@ -5,8 +5,9 @@ import { useTheme } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, BookOpen, BrainCircuit, UploadCloud, Hexagon, 
-  Settings, LogOut, Sun, Moon, Menu, X, ShieldAlert, User
+  Settings, LogOut, Sun, Moon, Menu, X, ShieldAlert, User, Search
 } from 'lucide-react';
+import GlobalSearch from './GlobalSearch';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -15,11 +16,24 @@ const Navbar = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setSearchOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -41,6 +55,7 @@ const Navbar = () => {
       ];
 
   return (
+    <>
     <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 px-4 md:px-8 py-4 ${scrolled ? 'pt-4' : 'pt-6'}`}>
       <div className={`max-w-7xl mx-auto rounded-[2rem] transition-all duration-500 border ${scrolled 
         ? 'bg-white/70 dark:bg-slate-900/70 backdrop-blur-3xl shadow-2xl shadow-primary-500/10 border-white/50 dark:border-white/10' 
@@ -82,20 +97,30 @@ const Navbar = () => {
 
           {/* Right Actions */}
           <div className="flex items-center gap-4">
+             {/* Search Button (Hidden on tiny mobile) */}
+             <button 
+               onClick={() => setSearchOpen(true)}
+               className="hidden sm:flex items-center gap-3 px-4 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all border border-transparent hover:border-primary-500/30"
+             >
+                <Search className="w-5 h-5"/>
+                <span className="text-xs font-black uppercase tracking-widest hidden lg:block opacity-60">Find...</span>
+                <span className="px-1.5 py-0.5 rounded-md bg-white dark:bg-slate-900 text-[10px] font-black border border-slate-200 dark:border-slate-800 hidden xl:block opacity-60 self-center">⌘K</span>
+             </button>
+
              <button 
                onClick={toggleTheme}
                className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm"
              >
-               {isDark ? <Sun className="w-5 h-5"/> : <Moon className="w-5 h-5"/>}
+                {isDark ? <Sun className="w-5 h-5"/> : <Moon className="w-5 h-5"/>}
              </button>
 
              {user ? (
-               <div className="hidden sm:flex items-center gap-4 pl-4 border-l border-slate-200 dark:border-slate-700">
+               <div className="hidden sm:flex items-center gap-4 pl-4 border-l border-slate-200 dark:border-slate-700 h-10">
                   <Link to="/profile" className="flex items-center gap-3 group px-2 py-1 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer">
                      <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary-500 to-indigo-500 flex items-center justify-center text-white text-sm font-bold shadow-md group-hover:scale-105 transition-transform">
                         {user.name?.charAt(0)}
                      </div>
-                     <div className="text-left hidden lg:block">
+                     <div className="text-left hidden xl:block">
                         <div className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{user.name?.split(' ')[0]}</div>
                         <div className="text-[10px] text-primary-500 font-extrabold uppercase tracking-widest leading-tight">{user.role}</div>
                      </div>
@@ -174,6 +199,8 @@ const Navbar = () => {
         )}
       </AnimatePresence>
     </nav>
+    <GlobalSearch isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+    </>
   );
 };
 
