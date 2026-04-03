@@ -192,45 +192,74 @@ class GeminiService {
   }
 
   async generateMasterclass(topic, fileContentSnippet = '') {
-    const textContext = fileContentSnippet ? `\nCRITICAL CONTEXT: Build this lesson specifically around this text:\n"""\n${fileContentSnippet.substring(0, 50000)}\n"""\n` : '';
+    const textContext = fileContentSnippet ? `\nCRITICAL CONTEXT: Build this lesson ONLY around this text:\n"""\n${fileContentSnippet.substring(0, 40000)}\n"""\n` : '';
     
-    const prompt = `You are the world's greatest practical tutor (like Khan Academy, CrashCourse, or 3Blue1Brown).
-    Create a 5-7 scene highly engaging ANIMATED visual lesson about: "${topic}".
+    const prompt = `You are the world's BEST interactive teacher — like a world-class professor who teaches with energy, real examples, and keeps students engaged by asking questions mid-lesson.
+    Create a 6-8 scene interactive animated lesson about: "${topic}".
     ${textContext}
     
-    ANIMATION TYPES you can pick per scene (choose the best one for the concept):
-    - "flow": A step-by-step process with arrows (use for how-things-work, pipelines, algorithms)
-    - "buildup": Concepts that stack or layer on each other (use for definitions, components, hierarchy)  
-    - "comparison": Two things side by side (use for pros/cons, before/after, A vs B)
-    - "code": Animated code reveal (use when showing syntax, formulas, commands)
-    - "concept": A central idea with radiating facts (use for overview, key idea intro)
+    SCENE TYPES — pick the best per scene, USE "interactive" at least TWICE:
+    - "flow": Step-by-step pipeline with animated arrows. Use for processes, algorithms, how-things-work.
+    - "buildup": Stacking concepts that build on each other. Use for definitions, layers, hierarchy.
+    - "comparison": Side-by-side contrast. Use for pros/cons, A vs B, before/after.
+    - "code": Animated typing reveal. Use for syntax, formulas, commands.
+    - "concept": Central idea with radiating facts. Use for overviews, key concepts.
+    - "interactive": The teacher PAUSES and asks the student a question. The student must pick an answer. The teacher then gives personalized spoken feedback per choice.
     
-    Return strict JSON with NO markdown, NO code blocks, just raw JSON:
+    Return STRICT JSON (no markdown, no code blocks):
     {
-      "youtubeQuery": "targeted YouTube search query for this topic",
+      "youtubeQuery": "a very targeted YouTube search for this topic",
       "scenes": [
         {
-          "teacherScript": "Enthusiastic 2-3 sentence spoken script. Speak directly to the student in 1st person. MUST be factually based on context provided.",
-          "title": "Scene concept title",
+          "type": "teaching",
+          "teacherScript": "Enthusiastic 2-3 sentence spoken script. Address the student directly. Use real-world analogies. Base everything on the context provided.",
+          "title": "Scene title",
           "icon": "Single emoji",
           "animationType": "flow",
           "visualSteps": [
-            { "label": "Step 1 label", "icon": "emoji", "description": "short explanation" },
-            { "label": "Step 2 label", "icon": "emoji", "description": "short explanation" },
-            { "label": "Step 3 label", "icon": "emoji", "description": "short explanation" }
+            { "label": "Step label", "icon": "emoji", "description": "brief description" }
           ],
-          "codeSnippet": "optional code/formula if animationType is code",
-          "comparisonLeft": { "label": "Left side label", "points": ["point1", "point2"] },
-          "comparisonRight": { "label": "Right side label", "points": ["point1", "point2"] }
+          "codeSnippet": "only if animationType is code",
+          "comparisonLeft": { "label": "Left label", "points": ["point1"] },
+          "comparisonRight": { "label": "Right label", "points": ["point1"] }
+        },
+        {
+          "type": "interactive",
+          "teacherScript": "Great! Before we move on, let me test your understanding. Here is a question for you...",
+          "title": "Quick Check! 🎯",
+          "icon": "🤔",
+          "question": "A clear, specific question based strictly on what was just taught",
+          "choices": [
+            {
+              "text": "First answer option",
+              "isCorrect": false,
+              "teacherResponse": "Not quite! Here is a warm, encouraging explanation of why this is wrong and what the right thinking is. 2 sentences."
+            },
+            {
+              "text": "The correct answer option",
+              "isCorrect": true,
+              "teacherResponse": "Excellent! You are absolutely right! Here is why this is correct and a real-world example to reinforce it. 2 sentences."
+            },
+            {
+              "text": "Third answer option",
+              "isCorrect": false,
+              "teacherResponse": "Good thinking, but not quite. Here is the distinction you need to understand. 2 sentences."
+            },
+            {
+              "text": "Fourth answer option",
+              "isCorrect": false,
+              "teacherResponse": "That is a common misconception! Here is what is actually happening. 2 sentences."
+            }
+          ]
         }
       ]
     }
     
-    Notes:
-    - visualSteps: always provide 3-4 items (used for flow, buildup, concept types)
-    - comparisonLeft/Right: only needed when animationType is "comparison", can be omitted otherwise
-    - codeSnippet: only needed when animationType is "code", can be omitted otherwise
-    - Make EVERY scene visually distinct with a different animationType`;
+    RULES:
+    - Use "interactive" scenes at least 2 times, spread throughout the lesson (not all at the end)
+    - Every teaching scene MUST have visualSteps (3-4 items) unless it is a "code" or "comparison" type
+    - The teacher should speak like an excited human, using phrases like "Think of it this way...", "Here is the cool part...", "You might be asking yourself..."
+    - ALL content MUST be derived from the provided context, not general knowledge`;
 
     try {
       const text = await this.runWithFallback(prompt, true);
