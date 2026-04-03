@@ -124,23 +124,43 @@ class GeminiService {
   async generateMasterclass(topic, fileContentSnippet = '') {
     const textContext = fileContentSnippet ? `\nCRITICAL CONTEXT: Build this lesson specifically around this text:\n"""\n${fileContentSnippet.substring(0, 50000)}\n"""\n` : '';
     
-    const prompt = `You are the world's greatest practical tutor (like from Khan Academy or CrashCourse).
-    Create a highly engaging, practical visual lesson about: "${topic}".
+    const prompt = `You are the world's greatest practical tutor (like Khan Academy, CrashCourse, or 3Blue1Brown).
+    Create a 5-7 scene highly engaging ANIMATED visual lesson about: "${topic}".
     ${textContext}
     
-    Return strict JSON matching this format EXACTLY:
+    ANIMATION TYPES you can pick per scene (choose the best one for the concept):
+    - "flow": A step-by-step process with arrows (use for how-things-work, pipelines, algorithms)
+    - "buildup": Concepts that stack or layer on each other (use for definitions, components, hierarchy)  
+    - "comparison": Two things side by side (use for pros/cons, before/after, A vs B)
+    - "code": Animated code reveal (use when showing syntax, formulas, commands)
+    - "concept": A central idea with radiating facts (use for overview, key idea intro)
+    
+    Return strict JSON with NO markdown, NO code blocks, just raw JSON:
     {
-      "youtubeQuery": "A highly targeted YouTube search query to find the best real video tutorial for this topic",
+      "youtubeQuery": "targeted YouTube search query for this topic",
       "scenes": [
         {
-          "teacherScript": "An enthusiastic, engaging spoken script tailored specifically for this slide. Speak directly to the student in 1st person. 2-3 sentences max per scene. IT MUST BE FACTUALLY BASED ON THE CRITICAL CONTEXT PROVIDED.",
-          "title": "Slide concept",
-          "icon": "Emoji representation",
-          "codeSnippet": "Optional practical code or formula to display",
-          "bulletPoints": ["Point 1 derived from text", "Point 2 derived from text"]
+          "teacherScript": "Enthusiastic 2-3 sentence spoken script. Speak directly to the student in 1st person. MUST be factually based on context provided.",
+          "title": "Scene concept title",
+          "icon": "Single emoji",
+          "animationType": "flow",
+          "visualSteps": [
+            { "label": "Step 1 label", "icon": "emoji", "description": "short explanation" },
+            { "label": "Step 2 label", "icon": "emoji", "description": "short explanation" },
+            { "label": "Step 3 label", "icon": "emoji", "description": "short explanation" }
+          ],
+          "codeSnippet": "optional code/formula if animationType is code",
+          "comparisonLeft": { "label": "Left side label", "points": ["point1", "point2"] },
+          "comparisonRight": { "label": "Right side label", "points": ["point1", "point2"] }
         }
       ]
-    }`;
+    }
+    
+    Notes:
+    - visualSteps: always provide 3-4 items (used for flow, buildup, concept types)
+    - comparisonLeft/Right: only needed when animationType is "comparison", can be omitted otherwise
+    - codeSnippet: only needed when animationType is "code", can be omitted otherwise
+    - Make EVERY scene visually distinct with a different animationType`;
 
     try {
       const text = await this.runWithFallback(prompt, true);
