@@ -43,15 +43,69 @@ class GeminiService {
       }
     }
 
-    // FINAL HACKATHON FALLBACK: If all models fail (quota/auth), return a helpful mock response
+    // FINAL HACKATHON FALLBACK: If all models fail (quota/auth/network), return a beautiful mock response
     console.error(`[GeminiService] CRITICAL: All models failed. Providing Mock data to keep UI alive.`);
     if (expectsJson) {
-      // Return a valid empty/mock JSON structure that matches our most common needs
       if (prompt.includes('quiz')) return JSON.stringify({ quiz: [{ question: "Sample: What is StudyHive?", options: ["A platform", "A book", "A car", "A fruit"], correctAnswer: 0 }] });
-      if (prompt.includes('visual lesson') || prompt.includes('Masterclass')) return JSON.stringify({ topic: "General Study", youtubeQuery: "study skills", scenes: [{ teacherScript: "Welcome to your AI lesson. The AI is currently busy, but let's review basic study techniques.", title: "Lesson Active", icon: "📚", bulletPoints: ["Stay organized", "Focus on core concepts"] }] });
+      
+      if (prompt.includes('ANIMATED visual lesson')) {
+        return JSON.stringify({
+          topic: "StudyHive: Offline Mode Masterclass",
+          youtubeQuery: "offline fallback presentation",
+          scenes: [
+            {
+              teacherScript: "Welcome to StudyHive! It looks like our connection to the core AI hive is currently resting. But don't worry, I can still show you how our visual animation engines work!",
+              title: "System Offline",
+              icon: "🐝",
+              animationType: "concept",
+              visualSteps: [
+                { label: "Connection Lost", icon: "📡", description: "No internet detected" },
+                { label: "Fallback Engine", icon: "⚙️", description: "Loading mock presentation" }
+              ]
+            },
+            {
+              teacherScript: "First, we have the Flow animation. This is perfect for teaching algorithms, pipelines, and step-by-step processes...",
+              title: "Flow Engine",
+              icon: "🌊",
+              animationType: "flow",
+              visualSteps: [
+                { label: "Step 1: Input", icon: "📥", description: "Data enters the system" },
+                { label: "Step 2: Process", icon: "🛠️", description: "The AI parses the context" },
+                { label: "Step 3: Output", icon: "📤", description: "Cinematic generation complete" }
+              ]
+            },
+            {
+              teacherScript: "Next up is the Buildup engine. We use this to teach concepts that stack on top of each other, building a solid foundation.",
+              title: "Buildup Stack",
+              icon: "🧱",
+              animationType: "buildup",
+              visualSteps: [
+                { label: "Foundation", icon: "🏛️", description: "The core database layer" },
+                { label: "Logic", icon: "🧠", description: "The AI routing layer" },
+                { label: "Interface", icon: "✨", description: "The beautiful UI you see now" }
+              ]
+            },
+            {
+              teacherScript: "We also have the Comparison engine. This allows me to explain the pros and cons of two different concepts side by side.",
+              title: "A vs B Comparison",
+              icon: "⚖️",
+              animationType: "comparison",
+              comparisonLeft: { label: "Standard Static PDFs", points: ["Boring text blocks", "Easy to lose focus", "No interactivity"] },
+              comparisonRight: { label: "StudyHive Masterclass", points: ["Dynamic audio-visuals", "Highly engaging", "AI-driven teaching"] }
+            },
+            {
+              teacherScript: "Finally, for computer science topics, I can deploy the Code generator. Here is a little snippet to show you how it works. Good luck on your defense!",
+              title: "Code Animation",
+              icon: "💻",
+              animationType: "code",
+              codeSnippet: "function studyHive() {\n  console.log('Winning the hackathon!');\n  return true;\n}\n\nstudyHive();"
+            }
+          ]
+        });
+      }
       return JSON.stringify({});
     }
-    return "Honey AI is currently resting due to high hive activity. Here is a study tip: Break your work into 25-minute Pomodoro sessions!";
+    return "Honey AI is currently resting due to high hive activity. Try again once your network connects!";
   }
 
   async generateQuiz(topic, difficulty = 'medium') {
