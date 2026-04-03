@@ -33,14 +33,23 @@ const AIAssistant = () => {
   const [chatMessage, setChatMessage] = useState('');
   const [sendingChat, setSendingChat] = useState(false);
   const chatEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
   useEffect(() => {
     if (user) fetchRecommendation();
-    scrollToBottom();
-  }, [user, messages]);
+  }, [user]);
+
+  useEffect(() => {
+    // Scroll only the chat messages container, never the page
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   };
 
   const fetchRecommendation = async () => {
@@ -354,7 +363,7 @@ const AIAssistant = () => {
               </div>
 
               {/* Messages Area */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50/50 dark:bg-slate-900/20">
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50/50 dark:bg-slate-900/20">
                  <AnimatePresence initial={false}>
                     {messages.map((m, idx) => (
                        <motion.div 
