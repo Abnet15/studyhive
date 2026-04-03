@@ -21,6 +21,9 @@ const config = {
   upload: {
     maxFileSizeMb: toNumber(process.env.UPLOAD_MAX_SIZE_MB, 25),
   },
+  ai: {
+    geminiApiKey: process.env.GEMINI_API_KEY,
+  },
 };
 
 module.exports = config;

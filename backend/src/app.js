@@ -14,6 +14,7 @@ const materialRoutes = require('./routes/material.routes');
 const badgeRoutes = require('./routes/badge.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const userRoutes = require('./routes/user.routes');
+const aiRoutes = require('./routes/ai.routes');
 
 const app = express();
 
@@ -59,7 +60,8 @@ const authLimiter = rateLimit({
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 
-// Serve uploaded files statically - Removed (Now using Cloudinary CDN)
+// Serve uploaded files statically if local storage is used
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.get('/api/health', (_req, res) => {
   res.json({
@@ -75,6 +77,7 @@ app.use('/api/materials', materialRoutes);
 app.use('/api/badges', badgeRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Root health-check — keeps Render's probe happy
 app.get('/', (_req, res) => {

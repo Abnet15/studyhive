@@ -1,25 +1,44 @@
 const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('../config/cloudinary');
 
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req, file) => {
-    // Attempt to determine resource type based on mime type
-    let resource_type = 'auto'; // 'image', 'video', 'raw'
-    if (file.mimetype.includes('pdf') || file.mimetype.includes('document')) {
-      resource_type = 'raw';
-    } else if (file.mimetype.includes('image')) {
-      resource_type = 'image';
-    }
+// Ensure local uploads directory exists
+const UPLOADS_DIR = path.resolve(__dirname, '../../uploads');
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 
-    return {
-      folder: 'studyhive/materials',
-      resource_type: resource_type,
-      public_id: `${Date.now()}-${file.originalname.replace(/\.[^/.]+$/, "")}`
-    };
-  },
-});
+let storage;
+
+// Use Cloudinary only if configured
+if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY) {
+  storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: async (req, file) => {
+      let resource_type = 'auto'; 
+      if (file.mimetype.includes('pdf') || file.mimetype.includes('document')) {
+        resource_type = 'raw';
+      }
+      return {
+        folder: 'studyhive/materials',
+        resource_type: resource_type,
+        public_id: `${Date.now()}-${file.originalname.replace(/\.[^/.]+$/, "")}`
+      };
+    },
+  });
+} else {
+  // Fallback to local storage
+  storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, UPLOADS_DIR);
+    },
+    filename: (req, file, cb) => {
+      cb(null, `${Date.now()}-${file.originalname}`);
+    },
+  });
+}
 
 const upload = multer({ storage: storage });
 

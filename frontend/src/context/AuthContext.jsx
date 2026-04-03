@@ -28,24 +28,36 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const queryClient = useQueryClient();
-  const token = localStorage.getItem(TOKEN_KEY) || null;
+  const [token, setToken] = React.useState(localStorage.getItem(TOKEN_KEY) || null);
 
   const persistToken = useCallback((value) => {
-    if (!value) localStorage.removeItem(TOKEN_KEY);
-    else localStorage.setItem(TOKEN_KEY, value);
+    if (!value) {
+      localStorage.removeItem(TOKEN_KEY);
+      setToken(null);
+    } else {
+      localStorage.setItem(TOKEN_KEY, value);
+      setToken(value);
+    }
   }, []);
 
   // 1. Profile Query (Automatic Fetch & Cache)
   const { data: user, isLoading: authLoading, error: profileError } = useQuery({
-    queryKey: ['authProfile'],
+    queryKey: ['authProfile', token],
     queryFn: async () => {
       if (!token) return null;
-      const data = await apiClient.get('/auth/me', { token });
-      return normalizeUser(data.user);
+      try {
+        const data = await apiClient.get('/auth/me', { token });
+        return normalizeUser(data.user);
+      } catch (err) {
+        if (err.status === 401) {
+          persistToken(null);
+          return null;
+        }
+        throw err;
+      }
     },
-    staleTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 10,
     retry: false,
-    onError: () => persistToken(null),
   });
 
   // 2. Admin Users Query

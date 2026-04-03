@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const slugify = require('slugify');
 const Material = require('../models/Material.model');
 const Review = require('../models/Review.model');
@@ -140,10 +141,14 @@ const createMaterial = asyncHandler(async (req, res) => {
   }
 
   const slug = await buildSlug(title);
-  const fileUrl = req.file.path; // Cloudinary secure URL
+  
+  // Handle both Cloudinary (URL) and Local (Path)
+  const isCloudinary = req.file.path.startsWith('http');
+  const fileUrl = isCloudinary ? req.file.path : `/uploads/${req.file.filename}`;
+  
   const originalName = req.file.originalname || 'unknown';
-  const fileExt = path.extname(originalName).replace('.', '') || 'file';
-  const fileType = fileExt.toUpperCase();
+  const fileExt = path.extname(originalName) || '.file';
+  const fileType = fileExt.replace('.', '').toUpperCase();
   const fileSize = req.file.size || 0;
 
   // Askuala AI — generate Smart Summary (never crashes upload)
@@ -205,17 +210,23 @@ const deleteMaterial = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'Not allowed to delete this material');
   }
 
-  // Delete file from Cloudinary
-  if (material.fileUrl && material.fileUrl.includes('cloudinary')) {
-    try {
-      // Extract public_id from Cloudinary URL
-      const urlParts = material.fileUrl.split('/');
-      const fileWithExt = urlParts[urlParts.length - 1];
-      const folder = urlParts[urlParts.length - 2];
-      const publicId = `${folder}/${fileWithExt.split('.')[0]}`;
-      await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
-    } catch (err) {
-      console.warn('[deleteMaterial] Cloudinary cleanup failed:', err.message);
+  // Delete file from either local or Cloudinary
+  if (material.fileUrl) {
+    if (material.fileUrl.startsWith('/uploads/')) {
+      const localPath = path.join(__dirname, '../../', material.fileUrl);
+      if (fs.existsSync(localPath)) {
+        fs.unlinkSync(localPath);
+      }
+    } else if (material.fileUrl.includes('cloudinary')) {
+      try {
+        const urlParts = material.fileUrl.split('/');
+        const fileWithExt = urlParts[urlParts.length - 1];
+        const folder = urlParts[urlParts.length - 2];
+        const publicId = `${folder}/${fileWithExt.split('.')[0]}`;
+        await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
+      } catch (err) {
+        console.warn('[deleteMaterial] Cloudinary cleanup failed:', err.message);
+      }
     }
   }
 
