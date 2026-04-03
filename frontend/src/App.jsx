@@ -53,7 +53,7 @@ function AdminRoute({ children }) {
 
 function AppRoutes() {
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <div className="flex flex-col min-h-screen">
         <Navbar />
         <main className="flex-grow pt-14 sm:pt-16">

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
-import { Play, Pause, Volume2, Sparkles, Youtube, ChevronRight, X } from 'lucide-react';
+import { Play, Pause, Volume2, Sparkles, Video, ChevronRight, X } from 'lucide-react';
 
 const MasterclassPlayer = () => {
   const { id } = useParams();
@@ -244,7 +244,7 @@ const MasterclassPlayer = () => {
             {/* Real World Validation (YouTube Recommendation) */}
             <div className="mt-auto group cursor-pointer relative overflow-hidden bg-[#FF0000]/10 hover:bg-[#FF0000]/20 border border-[#FF0000]/20 rounded-3xl p-6 transition-all" onClick={() => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(data.youtubeQuery)}`, '_blank')}>
                <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF0000]/20 rounded-full blur-2xl -mr-16 -mt-16 pointer-events-none"></div>
-               <Youtube className="w-8 h-8 text-[#FF0000] mb-4" />
+               <Video className="w-8 h-8 text-[#FF0000] mb-4" />
                <h4 className="font-bold text-white mb-2">Watch Real Examples</h4>
                <p className="text-sm text-slate-400 leading-tight">
                   Click to open the best YouTube tutorials for: <span className="font-medium text-slate-300">"{data.youtubeQuery}"</span>
