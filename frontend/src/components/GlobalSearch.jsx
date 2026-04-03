@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, BookOpen, FileText, ChevronRight, Hash } from 'lucide-react';
+import { Search, X, BookOpen, FileText, ChevronRight, Hash, Sparkles } from 'lucide-react';
 import { useMaterials } from '../context/MaterialContext';
 import { useCourses } from '../context/CourseContext';
 
@@ -32,6 +32,14 @@ const GlobalSearch = ({ isOpen, onClose }) => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  const navigationResults = [
+    { name: 'Honey AI Hub', path: '/ai-assistant', type: 'Tool', icon: <Sparkles className="w-5 h-5"/>, desc: 'Chat with Honey, Summarize, Lab' },
+    { name: 'Practice Arena', path: '/ai-assistant', type: 'Game', icon: <Hash className="w-5 h-5"/>, desc: 'Interactive AI Quiz sessions' },
+    { name: 'Course Catalog', path: '/courses', type: 'Page', icon: <BookOpen className="w-5 h-5"/>, desc: 'Explore all departments' },
+    { name: 'User Profile', path: '/profile', type: 'Page', icon: <Hash className="w-5 h-5"/>, desc: 'Your achievements and files' },
+    { name: 'Masterclass Hub', path: '/masterclass', type: 'Video', icon: <FileText className="w-5 h-5"/>, desc: 'Watch expert study guides' },
+  ].filter(n => n.name.toLowerCase().includes(query.toLowerCase()));
 
   const filteredMaterials = query.trim() === '' ? [] : materials.filter(m => 
     m.title.toLowerCase().includes(query.toLowerCase()) || 
@@ -84,23 +92,67 @@ const GlobalSearch = ({ isOpen, onClose }) => {
           {/* Results Area */}
           <div className="max-h-[60vh] overflow-y-auto p-4 custom-scrollbar">
              {query.trim() === '' ? (
-                <div className="py-20 text-center space-y-4">
-                   <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800/50 rounded-[2rem] flex items-center justify-center mx-auto text-3xl">🧩</div>
-                   <div className="text-slate-500 dark:text-slate-400 font-bold">Try searching for "Algorithms" or "Physics"</div>
-                   <div className="text-[10px] uppercase tracking-[0.2em] font-black text-primary-500 animate-pulse">Deep Indexing Active</div>
+                <div className="space-y-6">
+                   <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-4">Suggested Actions</div>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2">
+                       {navigationResults.slice(0, 4).map((n, i) => (
+                          <button 
+                             key={i}
+                             onClick={() => { navigate(n.path); onClose(); }}
+                             className="flex items-center gap-4 p-4 rounded-3xl bg-slate-50 dark:bg-slate-800/40 hover:bg-primary-50 dark:hover:bg-primary-900/20 text-left transition-all border border-transparent hover:border-primary-100"
+                          >
+                             <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-primary-500 shadow-sm">
+                                {n.icon}
+                             </div>
+                             <div className="flex-1 min-w-0">
+                                <div className="font-bold text-sm text-slate-900 dark:text-white">{n.name}</div>
+                                <div className="text-[10px] text-slate-400 font-bold uppercase">{n.type}</div>
+                             </div>
+                          </button>
+                       ))}
+                   </div>
+                   <div className="py-10 text-center space-y-4">
+                      <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mx-auto text-xl opacity-50">🔍</div>
+                      <div className="text-slate-400 font-bold text-sm">Search for anything in the Hive...</div>
+                   </div>
                 </div>
              ) : (
                 <div className="space-y-8 p-2">
+                   {/* Navigation Section */}
+                   {navigationResults.length > 0 && (
+                      <div className="space-y-3">
+                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-4">Instant Navigation</div>
+                         <div className="grid grid-cols-1 gap-2">
+                            {navigationResults.map((n, i) => (
+                               <button 
+                                 key={i}
+                                 onClick={() => { navigate(n.path); onClose(); }}
+                                 className="flex items-center gap-4 p-4 rounded-3xl hover:bg-slate-100 dark:hover:bg-slate-800/60 text-left transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 group h-auto"
+                               >
+                                  <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-slate-500 group-hover:bg-primary-500 group-hover:text-white transition-all shadow-sm">
+                                     {n.icon}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                     <div className="font-bold text-slate-900 dark:text-white truncate">{n.name}</div>
+                                     <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{n.type} • {n.desc}</div>
+                                  </div>
+                                  <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-primary-500 group-hover:translate-x-1 transition-all" />
+                               </button>
+                            ))}
+                         </div>
+                      </div>
+                   )}
+
                    {/* Courses Section */}
                    {filteredCourses.length > 0 && (
                       <div className="space-y-3">
-                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-4">Available Courses</div>
+                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-4">Study Subjects</div>
                          <div className="grid grid-cols-1 gap-2">
                             {filteredCourses.map(course => (
                                <button 
                                  key={course.id}
                                  onClick={() => { navigate(`/courses?course=${course.id}`); onClose(); }}
-                                 className="flex items-center gap-4 p-4 rounded-3xl hover:bg-primary-50 dark:hover:bg-primary-900/20 text-left transition-all border border-transparent hover:border-primary-100 dark:hover:border-primary-900/30 group"
+                                 className="flex items-center gap-4 p-4 rounded-3xl hover:bg-primary-50 dark:hover:bg-primary-900/20 text-left transition-all border border-transparent hover:border-primary-100 group"
                                >
                                   <div className="w-12 h-12 rounded-2xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600">
                                      <Hash className="w-6 h-6" />
@@ -119,20 +171,20 @@ const GlobalSearch = ({ isOpen, onClose }) => {
                    {/* Materials Section */}
                    {filteredMaterials.length > 0 && (
                       <div className="space-y-3">
-                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-4">Resource Documents</div>
+                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-4">Research Materials</div>
                          <div className="grid grid-cols-1 gap-2">
                             {filteredMaterials.map(material => (
                                <button 
                                  key={material.id}
                                  onClick={() => { navigate(`/courses?course=${material.course_id}`); onClose(); }}
-                                 className="flex items-center gap-4 p-4 rounded-3xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-left transition-all border border-transparent hover:border-indigo-100 dark:hover:border-indigo-900/30 group"
+                                 className="flex items-center gap-4 p-4 rounded-3xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-left transition-all border border-transparent hover:border-indigo-100 group"
                                >
                                   <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
                                      <FileText className="w-6 h-6" />
                                   </div>
                                   <div className="flex-1 min-w-0">
                                      <div className="font-bold text-slate-900 dark:text-white truncate">{material.title}</div>
-                                     <div className="text-xs text-slate-500 font-medium">{material.course_name || 'General Material'}</div>
+                                     <div className="text-xs text-slate-500 font-medium">{material.course_name}</div>
                                   </div>
                                   <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
                                </button>
@@ -141,8 +193,8 @@ const GlobalSearch = ({ isOpen, onClose }) => {
                       </div>
                    )}
 
-                   {filteredCourses.length === 0 && filteredMaterials.length === 0 && (
-                      <div className="py-12 text-center text-slate-400 font-bold">No matches found for "{query}"</div>
+                   {navigationResults.length === 0 && filteredCourses.length === 0 && filteredMaterials.length === 0 && (
+                      <div className="py-12 text-center text-slate-400 font-bold">No results for "{query}"</div>
                    )}
                 </div>
              )}

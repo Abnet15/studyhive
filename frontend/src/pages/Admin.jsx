@@ -223,6 +223,33 @@ const Admin = () => {
     show: { opacity: 1, y: 0 }
   };
 
+   const handleExport = () => {
+    try {
+      const headers = ['ID', 'Title', 'Type', 'Downloads', 'Course', 'Rating'];
+      const rows = materials.map(m => [
+        m.id,
+        `"${m.title.replace(/"/g, '""')}"`,
+        m.material_type,
+        m.downloads || 0,
+        m.course_name || 'N/A',
+        m.rating || 0
+      ]);
+      
+      const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `studyhive_report_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      alert('✅ Report exported successfully');
+    } catch (err) {
+      alert('❌ Export failed');
+    }
+  };
+
   return (
     <div className="min-h-screen pb-20 pt-10 px-4 md:px-8 relative overflow-hidden bg-slate-50 dark:bg-[#030712]">
       {/* Background Ambience */}
@@ -246,7 +273,10 @@ const Admin = () => {
               </h1>
            </div>
            <div className="flex gap-4">
-              <button className="btn-secondary py-4 px-6 text-sm font-black uppercase tracking-widest shadow-xl hidden md:flex items-center gap-2">
+              <button 
+                onClick={handleExport}
+                className="btn-secondary py-4 px-6 text-sm font-black uppercase tracking-widest shadow-xl hidden md:flex items-center gap-2"
+              >
                 <Download className="w-4 h-4"/> Export Report
               </button>
               <button onClick={handleSync} className="btn-primary py-4 px-8 text-sm font-black uppercase tracking-widest shadow-xl flex items-center gap-2">

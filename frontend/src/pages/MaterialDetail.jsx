@@ -134,9 +134,15 @@ const MaterialDetail = () => {
     }
   };
 
+  const isOwner = user && (String(user.id) === String(material.uploader_id || material.uploaderId));
+
   const handleRate = async (rateValue) => {
     if (!user) {
       toast.error('You must be logged in to rate.');
+      return;
+    }
+    if (isOwner) {
+      toast.error('You cannot rate your own material.');
       return;
     }
     try {
@@ -205,18 +211,20 @@ const MaterialDetail = () => {
                    </div>
                    <div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-widest mb-1">Rating</div>
-                      <div className="flex items-center gap-1 group">
+                      <div className="flex items-center gap-1 group" title={isOwner ? 'You cannot rate your own uploads' : 'Submit your rating'}>
                          {[1, 2, 3, 4, 5].map((star) => (
                            <Star 
                              key={star}
-                             className={`w-5 h-5 cursor-pointer transition-all ${
+                             className={`w-5 h-5 transition-all ${
+                               isOwner ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                             } ${
                                (ratingHover || material.rating) >= star 
                                  ? 'fill-amber-400 text-amber-400' 
                                  : 'text-slate-300 dark:text-slate-700'
                              }`}
-                             onMouseEnter={() => setRatingHover(star)}
-                             onMouseLeave={() => setRatingHover(0)}
-                             onClick={() => handleRate(star)}
+                             onMouseEnter={() => !isOwner && setRatingHover(star)}
+                             onMouseLeave={() => !isOwner && setRatingHover(0)}
+                             onClick={() => !isOwner && handleRate(star)}
                            />
                          ))}
                          <span className="ml-2 font-bold text-slate-700 dark:text-slate-300">({material.rating || 0})</span>

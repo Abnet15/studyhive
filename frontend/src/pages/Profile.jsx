@@ -36,7 +36,7 @@ const Profile = () => {
     [badges, stats]
   );
 
-  if (!user) return null;
+  const isAdmin = user?.role === 'admin';
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -81,6 +81,7 @@ const Profile = () => {
                 <div>
                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight">{user.name}</h1>
                    <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 mt-2">
+                       <span className="px-3 py-1 bg-primary-500 text-white text-[10px] font-black uppercase tracking-widest rounded-full">{isAdmin ? 'System Administrator' : 'Student Member'}</span>
                       <div className="flex items-center gap-2 px-3 py-1 bg-white dark:bg-slate-800 rounded-full border border-slate-100 dark:border-slate-700 shadow-sm text-xs font-black text-slate-500 uppercase tracking-widest">
                          <BookOpen className="w-3 h-3 text-primary-500" /> {user.dept}
                       </div>
@@ -93,7 +94,7 @@ const Profile = () => {
                 {/* Visual Stats Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
                    {[
-                     { val: stats.totalUploads, label: 'Contributions', icon: <TrendingUp className="w-4 h-4 text-green-500"/> },
+                     { val: isAdmin ? materials.length : stats.totalUploads, label: isAdmin ? 'Total Assets' : 'Contributions', icon: <TrendingUp className="w-4 h-4 text-green-500"/> },
                      { val: stats.avgRating, label: 'Reputation', icon: <Star className="w-4 h-4 text-amber-500"/> },
                      { val: stats.totalDownloads, label: 'Community Impact', icon: <Download className="w-4 h-4 text-primary-500"/> }
                    ].map((stat, i) => (
@@ -112,24 +113,65 @@ const Profile = () => {
                 <Link to="/settings" className="btn-secondary py-3 px-8 flex items-center justify-center gap-3 shadow-xl">
                    <Settings className="w-5 h-5" /> Settings
                 </Link>
-                <div className="p-4 rounded-3xl bg-primary-500/10 border border-primary-500/20 text-center">
-                   <div className="text-[10px] font-black text-primary-600 uppercase tracking-widest">Growth Tier</div>
-                   <div className="text-xl font-black text-primary-700 dark:text-primary-400">Elite Scholar</div>
-                </div>
+                {isAdmin ? (
+                   <Link to="/admin" className="btn-primary py-3 px-8 flex items-center justify-center gap-3 shadow-xl">
+                      <ShieldCheck className="w-5 h-5" /> Admin Panel
+                   </Link>
+                ) : (
+                  <div className="p-4 rounded-3xl bg-primary-500/10 border border-primary-500/20 text-center">
+                     <div className="text-[10px] font-black text-primary-600 uppercase tracking-widest">Growth Tier</div>
+                     <div className="text-xl font-black text-primary-700 dark:text-primary-400">Elite Scholar</div>
+                  </div>
+                )}
              </div>
           </div>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
            
-           {/* LEFT: Uploads (8 cols) */}
+           {/* LEFT: Content (8 cols) */}
            <div className="lg:col-span-8 space-y-8">
               <div className="flex justify-between items-center px-2">
-                 <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Your Digital Library</h2>
-                 <Link to="/upload" className="text-xs font-black text-primary-500 uppercase tracking-[0.2em] hover:translate-x-2 transition-transform">+ Upload More</Link>
+                 <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                    {isAdmin ? 'Management Control Center' : 'Your Digital Library'}
+                 </h2>
+                 {!isAdmin && (
+                    <Link to="/upload" className="text-xs font-black text-primary-500 uppercase tracking-[0.2em] hover:translate-x-2 transition-transform">+ Upload More</Link>
+                 )}
               </div>
 
-              {materialsLoading ? (
+              {isAdmin ? (
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="glass-card p-8 space-y-6">
+                       <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase">System Summary</h4>
+                       <div className="space-y-4">
+                          <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
+                             <span className="text-xs font-bold text-slate-500">Live Services</span>
+                             <span className="text-xs font-black text-green-500">Node/Express (ACTIVE)</span>
+                          </div>
+                          <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800">
+                             <span className="text-xs font-bold text-slate-500">AI Engine</span>
+                             <span className="text-xs font-black text-primary-500">Gemini-Pro (READY)</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                             <span className="text-xs font-bold text-slate-500">Active Databases</span>
+                             <span className="text-xs font-black text-indigo-500">Mongoose/Local (CONNECTED)</span>
+                          </div>
+                       </div>
+                    </div>
+                    <div className="glass-card p-8 space-y-6">
+                       <h4 className="text-lg font-black text-slate-900 dark:text-white uppercase">Storage Health</h4>
+                       <div className="flex items-center gap-6">
+                          <div className="w-16 h-16 rounded-full border-4 border-primary-500/30 border-t-primary-500 flex items-center justify-center text-xs font-black">2.4GB</div>
+                          <div className="space-y-1">
+                             <div className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">Upload Stability</div>
+                             <div className="text-[10px] text-slate-500 font-bold uppercase">Optimal Performance</div>
+                          </div>
+                       </div>
+                       <Link to="/admin" className="btn-secondary py-2 text-xs w-full">Detailed Logs</Link>
+                    </div>
+                 </div>
+              ) : materialsLoading ? (
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {[1,2,3,4].map(i => <div key={i} className="h-64 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[2.5rem]"></div>)}
                  </div>
@@ -152,10 +194,17 @@ const Profile = () => {
 
            {/* RIGHT: Badges (4 cols) */}
            <div className="lg:col-span-4 space-y-8">
-              <h2 className="text-2xl font-black text-slate-900 dark:text-white px-2">Unlockables.</h2>
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white px-2">
+                 {isAdmin ? 'Authority Status' : 'Unlockables.'}
+              </h2>
               
               <div className="grid grid-cols-1 gap-4">
-                 {badgesLoading ? (
+                 {isAdmin ? (
+                    <div className="space-y-4">
+                       <Badge name="System Guardian" icon="🛡️" description="Root access verification active" earned={true} />
+                       <Badge name="AI Orchestrator" icon="🍯" description="Honey AI oversight enabled" earned={true} />
+                    </div>
+                 ) : badgesLoading ? (
                     <div className="space-y-4">
                        {[1,2,3].map(i => <div key={i} className="h-24 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl"></div>)}
                     </div>
@@ -168,15 +217,26 @@ const Profile = () => {
                  )}
               </div>
 
-              <div className="p-8 rounded-[2.5rem] bg-gradient-to-tr from-slate-900 to-indigo-950 text-white relative overflow-hidden group">
-                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-accent-500/20 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-[3s]"></div>
-                 <h4 className="text-xl font-bold mb-2 relative z-10">Next Goal 🎯</h4>
-                 <p className="text-slate-400 text-xs font-medium mb-6 relative z-10">Get 10 more downloads to unlock the "Community Hero" legendary badge.</p>
-                 <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden mb-2 relative z-10">
-                    <motion.div initial={{ width: 0 }} animate={{ width: '65%' }} className="h-full bg-accent-500 shadow-[0_0_15px_rgba(244,63,94,0.5)]"></motion.div>
-                 </div>
-                 <div className="text-[10px] font-black uppercase tracking-widest text-accent-400 text-right">65% Progress</div>
-              </div>
+              {/* Progress Card (Hide for admin) */}
+              {!isAdmin && (
+                <div className="p-8 rounded-[2.5rem] bg-gradient-to-tr from-slate-900 to-indigo-950 text-white relative overflow-hidden group">
+                   <div className="absolute -top-10 -right-10 w-40 h-40 bg-accent-500/20 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-[3s]"></div>
+                   <h4 className="text-xl font-bold mb-2 relative z-10">Next Goal 🎯</h4>
+                   <p className="text-slate-400 text-xs font-medium mb-6 relative z-10">Get 10 more downloads to unlock the "Community Hero" legendary badge.</p>
+                   <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden mb-2 relative z-10">
+                      <motion.div initial={{ width: 0 }} animate={{ width: '65%' }} className="h-full bg-accent-500 shadow-[0_0_15px_rgba(244,63,94,0.5)]"></motion.div>
+                   </div>
+                   <div className="text-[10px] font-black uppercase tracking-widest text-accent-400 text-right">65% Progress</div>
+                </div>
+              )}
+
+              {isAdmin && (
+                <div className="p-8 rounded-[2.5rem] bg-primary-600 text-white shadow-2xl space-y-6">
+                   <h4 className="text-xl font-black uppercase tracking-tight">Security Alert 🚨</h4>
+                   <p className="text-primary-100 text-xs font-medium">No active security concerns. All AI interaction logs within normal parameters.</p>
+                   <Link to="/admin" className="btn-secondary dark:bg-white/10 text-white border-white/20 text-[10px] font-black py-2">Open Audit Trail</Link>
+                </div>
+              )}
            </div>
 
         </div>

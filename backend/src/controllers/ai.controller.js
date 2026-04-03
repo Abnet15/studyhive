@@ -4,6 +4,7 @@ const Bookmark = require('../models/Bookmark.model');
 const Material = require('../models/Material.model');
 const { extractTextFromFile } = require('../utils/ai');
 const path = require('path');
+const mongoose = require('mongoose');
 
 exports.getRecommendations = async (req, res, next) => {
   try {
@@ -87,7 +88,7 @@ exports.generateMasterclass = async (req, res, next) => {
     let resolvedTopic = topic;
     let contentSnippet = '';
 
-    if (materialId) {
+    if (materialId && mongoose.Types.ObjectId.isValid(materialId)) {
       const material = await Material.findById(materialId);
       if (material) {
         resolvedTopic = material.title;

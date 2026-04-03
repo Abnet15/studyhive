@@ -10,9 +10,9 @@ const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 const MODEL_HIERARCHY = [
   'gemini-2.5-flash',
   'gemini-2.0-flash',
-  'gemini-1.5-pro',
   'gemini-1.5-flash',
-  'gemini-1.5-flash-8b'
+  'gemini-pro-latest',
+  'gemini-flash-latest'
 ];
 
 /**
@@ -114,42 +114,31 @@ const generateSmartSummary = async (filePath, title) => {
   }
 
   const aiPrompt = `
-    You are an expert tutor and content validator for a university-level Edu-Tech platform called "StudyHive".
-    Analyze the following course material titled "${title}".
+    You are an expert academic tutor and content validator for "StudyHive", a premium university learning platform.
+    Analyze the provided course material titled "${title}".
     
-    CRITICAL RULES:
-    1. ALL quiz questions MUST be derived DIRECTLY from the actual content below. 
-    2. The summary must reflect what is ACTUALLY in the document.
-    3. Key terms must be REAL terms found in the document.
-    4. Topics must be high-level academic subjects this document covers.
-    5. Content validation: ONLY set "aiContentValid" to false if the text is explicitly malicious or obvious spam. If it is short, weird, or looks like random test data (e.g. "cdcd123"), assume it is a valid test file and SET IT TO TRUE.
+    CRITICAL RULES FOR GENERATION:
+    1. DOCUMENT-SPECIFIC: ALL quiz questions MUST be derived DIRECTLY from the factual concepts in the content below. 
+    2. NO META-QUESTIONS: NEVER generate questions about the system, the file processing status, the file name, or the document structure (e.g., "Why could the system not process...").
+    3. VALIDATION: If the content is too short to extract 3 meaningful questions, or if it is obvious placeholder/test text (like "cdcd123"), return an EMPTY "aiQuiz" array [].
+    4. SUMMARY: Provide a professional, academic summary that explains what the document actually teaches.
     
-    Return your response strictly in the following JSON format without Markdown blocks or extra text:
+    Return your response strictly in the following JSON format without Markdown blocks:
     {
-      "aiSummary": "A concise 2-3 sentence paragraph summarizing what this material actually teaches",
-      "aiKeyTerms": ["term1", "term2", "term3", "term4", "term5", "term6", "term7", "term8"],
-      "aiTopics": ["High-level subject 1", "High-level subject 2"],
+      "aiSummary": "Summary here",
+      "aiKeyTerms": ["term1", "term2", "..."],
+      "aiTopics": ["Academic Subject 1", "Academic Subject 2"],
       "aiContentValid": true,
       "aiQuiz": [
         {
-          "question": "A specific question whose answer is DIRECTLY found in the text above",
+          "question": "A specific question derived from the text",
           "options": ["Option A", "Option B", "Option C", "Option D"],
-          "answer": "The correct option exactly as it appears in the options array"
-        },
-        {
-          "question": "Another question derived from the content",
-          "options": ["Option A", "Option B", "Option C", "Option D"],
-          "answer": "The correct option exactly as it appears in the options array"
-        },
-        {
-          "question": "A third question derived from the content",
-          "options": ["Option A", "Option B", "Option C", "Option D"],
-          "answer": "The correct option exactly as it appears in the options array"
+          "answer": "Option A"
         }
       ]
     }
     
-    Material Text:
+    Material Content:
     """
     ${truncatedText}
     """
@@ -160,15 +149,23 @@ const generateSmartSummary = async (filePath, title) => {
     let cleanedJsonString = rawResponse.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleanedJsonString);
     
-    console.log('[Honey AI] Parsed response:', JSON.stringify(parsed, null, 2));
+    // Hallucination Guard: Filter out any meta-questions about the system or processing
+    let quiz = Array.isArray(parsed.aiQuiz) ? parsed.aiQuiz : [];
+    const forbiddenPatterns = [/system/i, /process/i, /titled/i, /material/i, /could not/i, /fail/i];
+    
+    quiz = quiz.filter(q => {
+      const qText = q.question.toLowerCase();
+      // If the question is about the document processing itself, kill it
+      const isMeta = forbiddenPatterns.some(p => p.test(qText));
+      return !isMeta;
+    });
 
-    // Ensure all expected fields exist
     return {
       aiSummary: parsed.aiSummary || 'Summary not available.',
       aiKeyTerms: Array.isArray(parsed.aiKeyTerms) ? parsed.aiKeyTerms : [],
       aiTopics: Array.isArray(parsed.aiTopics) ? parsed.aiTopics : [],
       aiContentValid: typeof parsed.aiContentValid === 'boolean' ? parsed.aiContentValid : true,
-      aiQuiz: Array.isArray(parsed.aiQuiz) ? parsed.aiQuiz : []
+      aiQuiz: quiz
     };
   } catch (error) {
     console.error('[Honey AI] Critical Error generating Smart Summary:', error);
