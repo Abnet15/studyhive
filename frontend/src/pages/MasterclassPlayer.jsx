@@ -331,8 +331,19 @@ const MasterclassPlayer = () => {
   };
 
   useEffect(() => {
+    // Auto-start the super teacher masterclass based on the file!
+    if (!professor && id) {
+      handleProfessorSelect({
+        id: 'super_teacher',
+        name: 'Super Teacher',
+        emoji: '🦸‍♂️',
+        tag: 'Master of Everything',
+        desc: 'The absolute best teacher in the world. Teaches everything perfectly, completely, accurately, and deeply in the best way using perfect real-world examples, stepping through every topic clearly.'
+      });
+    }
+
     return () => { synthRef.current?.cancel(); clearInterval(progressRef.current); };
-  }, []);
+  }, [id]);
 
   const speakText = useCallback((text, onDone) => {
     if (!synthRef.current || !text) { onDone?.(); return; }
@@ -374,9 +385,6 @@ const MasterclassPlayer = () => {
   const stopAll = () => { synthRef.current?.cancel(); clearInterval(progressRef.current); setIsPlaying(false); setProgress(0); setWaitingForAnswer(false); };
   const restart = () => { stopAll(); setCurrentSlide(0); setSelectedChoice(null); setProfessorMood('neutral'); setTimeout(() => playScene(0), 100); };
 
-  // ── Professor selector screen
-  if (!professor) return <TeacherSelector onSelect={handleProfessorSelect} />;
-
   // ── Loading
   if (loading) return (
     <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center text-white gap-8">
@@ -398,7 +406,7 @@ const MasterclassPlayer = () => {
         <div className="text-6xl">💔</div><h2 className="text-2xl font-bold">Lesson Failed</h2>
         <p className="text-red-400">{error || 'AI could not structure this lesson.'}</p>
         <div className="flex gap-3 justify-center mt-6">
-          <button onClick={() => { setProfessor(null); setData(null); setError(''); }} className="px-8 py-3 rounded-2xl bg-white/10 hover:bg-white/15 font-bold transition-colors">Change Professor</button>
+          <button onClick={restart} className="px-8 py-3 rounded-2xl bg-white/10 hover:bg-white/15 font-bold transition-colors">Try Again</button>
           <button onClick={() => navigate(-1)} className="px-8 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 font-bold transition-colors">Go Back</button>
         </div>
       </div>
@@ -434,7 +442,7 @@ const MasterclassPlayer = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => { stopAll(); setProfessor(null); setData(null); }} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold text-slate-400 transition-colors">Change Prof.</button>
+          <button onClick={restart} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold text-slate-400 transition-colors">Restart Masterclass</button>
           <div className="flex gap-1">
             {data.scenes.map((s, idx) => (<button key={idx} onClick={() => { stopAll(); setTimeout(() => playScene(idx), 80); }} className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentSlide ? (s.type === 'interactive' ? 'w-8 bg-amber-400' : 'w-8 bg-indigo-500') : 'w-1.5 bg-slate-800 hover:bg-slate-600'}`} />))}
           </div>
