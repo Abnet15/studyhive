@@ -56,7 +56,12 @@ async function extractTextFromFile(fileUrl) {
       dataBuffer = Buffer.from(response.data);
     } else {
       // Local file in the uploads directory
-      const localPath = path.resolve(__dirname, '../../', fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl);
+      let localPath = fileUrl;
+      // If multer gave us a relative path, resolve it relative to backend root
+      if (!path.isAbsolute(fileUrl)) {
+         localPath = path.resolve(__dirname, '../../', fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl);
+      }
+      
       if (!fs.existsSync(localPath)) {
         console.warn('[Honey AI] Local file not found:', localPath);
         return "";
