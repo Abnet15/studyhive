@@ -6,14 +6,13 @@ require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env'
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
-// Fallback hierarchy (Best to next best)
+// Fallback hierarchy (Best free model to next best)
 const MODEL_HIERARCHY = [
-  'gemini-3.1-pro-preview',
-  'gemini-3.1-flash-lite-preview',
-  'gemini-2.5-pro',
   'gemini-2.5-flash',
-  'gemini-pro-latest',
-  'gemini-flash-latest'
+  'gemini-2.0-flash',
+  'gemini-1.5-pro',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b'
 ];
 
 /**
