@@ -79,19 +79,33 @@ function AppRoutes() {
   );
 }
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
+
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <CourseProvider>
-          <MaterialProvider>
-            <ToastProvider>
-              <AppRoutes />
-            </ToastProvider>
-          </MaterialProvider>
-        </CourseProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <CourseProvider>
+            <MaterialProvider>
+              <ToastProvider>
+                <AppRoutes />
+              </ToastProvider>
+            </MaterialProvider>
+          </CourseProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 

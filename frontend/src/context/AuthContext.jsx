@@ -1,22 +1,16 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { createContext, useCallback, useContext, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../services/apiClient';
 
 const TOKEN_KEY = 'studyhive_token';
 const AuthContext = createContext(null);
 
 const normalizeUser = (record = {}) => ({
-  id: record.id,
+  id: record.id || record._id,
   name: record.fullName || record.name || record.full_name,
   fullName: record.fullName || record.name || record.full_name,
   email: record.email,
-  role: record.role || 'user',
+  role: record.role || 'student',
   dept: record.departmentName || record.dept || record.department_name || 'N/A',
   departmentId: record.departmentId || record.department_id || null,
   departmentName: record.departmentName || record.department_name || record.dept || 'N/A',
@@ -28,68 +22,58 @@ const normalizeUser = (record = {}) => ({
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 };
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
-  const [user, setUser] = useState(null);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [authError, setAuthError] = useState(null);
+  const queryClient = useQueryClient();
+  const token = localStorage.getItem(TOKEN_KEY) || null;
 
   const persistToken = useCallback((value) => {
-    if (!value) {
-      localStorage.removeItem(TOKEN_KEY);
-    } else {
-      localStorage.setItem(TOKEN_KEY, value);
-    }
-    setToken(value);
+    if (!value) localStorage.removeItem(TOKEN_KEY);
+    else localStorage.setItem(TOKEN_KEY, value);
   }, []);
 
-  const fetchProfile = useCallback(async () => {
-    if (!token) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
+  // 1. Profile Query (Automatic Fetch & Cache)
+  const { data: user, isLoading: authLoading, error: profileError } = useQuery({
+    queryKey: ['authProfile'],
+    queryFn: async () => {
+      if (!token) return null;
       const data = await apiClient.get('/auth/me', { token });
-      setUser(normalizeUser(data.user));
-    } catch (error) {
-      console.warn('Failed to load profile:', error.message);
-      persistToken(null);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [token, persistToken]);
+      return normalizeUser(data.user);
+    },
+    staleTime: 1000 * 60 * 10, // 10 minutes
+    retry: false,
+    onError: () => persistToken(null),
+  });
 
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+  // 2. Admin Users Query
+  const { data: users = [], refetch: refreshUsers } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      if (!token || user?.role !== 'admin') return [];
+      const data = await apiClient.get('/users', { token });
+      return (data.users || []).map(normalizeUser);
+    },
+    enabled: !!user && user.role === 'admin',
+  });
 
-  const login = async (email, password) => {
-    const cleanEmail = email.trim();
-    try {
-      const data = await apiClient.post('/auth/login', { email: cleanEmail, password });
+  // 3. Login Mutation
+  const loginMutation = useMutation({
+    mutationFn: async ({ email, password }) => {
+      const data = await apiClient.post('/auth/login', { email: email.trim(), password });
+      return data;
+    },
+    onSuccess: (data) => {
       persistToken(data.token);
-      const normalized = normalizeUser(data.user);
-      setUser(normalized);
-      setAuthError(null);
-      return { success: true, user: normalized };
-    } catch (error) {
-      setAuthError(error.message);
-      return { success: false, message: error.message };
-    }
-  };
+      queryClient.setQueryData(['authProfile'], normalizeUser(data.user));
+    },
+  });
 
-  const register = async ({ name, email, password, dept, year }) => {
-    try {
+  // 4. Register Mutation
+  const registerMutation = useMutation({
+    mutationFn: async ({ name, email, password, dept, year }) => {
       const payload = {
         fullName: name.trim(),
         email: email.trim(),
@@ -97,54 +81,48 @@ export const AuthProvider = ({ children }) => {
         departmentName: dept?.trim(),
         academicYear: year ? Number(year) : null,
       };
-      const data = await apiClient.post('/auth/register', payload);
+      return await apiClient.post('/auth/register', payload);
+    },
+    onSuccess: (data) => {
       persistToken(data.token);
-      const normalized = normalizeUser(data.user);
-      setUser(normalized);
-      return { success: true, user: normalized };
+      queryClient.setQueryData(['authProfile'], normalizeUser(data.user));
+    },
+  });
+
+  // 5. Admin User Mutations
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId) => apiClient.del(`/users/${userId}`, { token }),
+    onSuccess: () => queryClient.invalidateQueries(['users']),
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ userId, updates }) => apiClient.patch(`/users/${userId}`, updates, { token }),
+    onSuccess: () => queryClient.invalidateQueries(['users']),
+  });
+
+  // Legacy API wrapper to not break existing UI components immediately
+  const login = async (email, password) => {
+    try {
+      const data = await loginMutation.mutateAsync({ email, password });
+      return { success: true, user: normalizeUser(data.user) };
     } catch (error) {
-      setAuthError(error.message);
+      return { success: false, message: error.message };
+    }
+  };
+
+  const register = async (params) => {
+    try {
+      const data = await registerMutation.mutateAsync(params);
+      return { success: true, user: normalizeUser(data.user) };
+    } catch (error) {
       return { success: false, message: error.message };
     }
   };
 
   const logout = () => {
     persistToken(null);
-    setUser(null);
-    setUsers([]);
-    setAuthError(null);
-  };
-
-  const fetchUsers = useCallback(async () => {
-    if (!token || user?.role !== 'admin') {
-      setUsers([]);
-      return;
-    }
-    try {
-      const data = await apiClient.get('/users', { token });
-      setUsers((data.users || []).map(normalizeUser));
-    } catch (error) {
-      console.warn('Failed to fetch users:', error.message);
-    }
-  }, [token, user]);
-
-  useEffect(() => {
-    if (user?.role === 'admin') {
-      fetchUsers();
-    }
-  }, [user, fetchUsers]);
-
-  const deleteUser = async (userId) => {
-    if (!token || user?.role !== 'admin') return;
-    await apiClient.del(`/users/${userId}`, { token });
-    setUsers((prev) => prev.filter((u) => u.id !== userId));
-  };
-
-  const updateUser = async (userId, updates) => {
-    if (!token || user?.role !== 'admin') return;
-    await apiClient.patch(`/users/${userId}`, updates, { token });
-    // Refresh user list to get updated data
-    await fetchUsers();
+    queryClient.setQueryData(['authProfile'], null);
+    queryClient.clear();
   };
 
   const value = useMemo(
@@ -152,16 +130,16 @@ export const AuthProvider = ({ children }) => {
       user,
       users,
       token,
-      authLoading: loading,
-      authError,
+      authLoading,
+      authError: loginMutation.error?.message || registerMutation.error?.message || profileError?.message,
       login,
       register,
       logout,
-      deleteUser,
-      updateUser,
-      refreshUsers: fetchUsers,
+      deleteUser: (id) => deleteUserMutation.mutate(id),
+      updateUser: (id, updates) => updateUserMutation.mutate({ userId: id, updates }),
+      refreshUsers,
     }),
-    [user, users, token, loading, authError, fetchUsers]
+    [user, users, token, authLoading, profileError, loginMutation.error, registerMutation.error, refreshUsers]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
