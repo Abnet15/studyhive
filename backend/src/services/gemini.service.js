@@ -191,75 +191,77 @@ class GeminiService {
     }
   }
 
-  async generateMasterclass(topic, fileContentSnippet = '') {
+  async generateMasterclass(topic, fileContentSnippet = '', teacherPersona = null) {
     const textContext = fileContentSnippet ? `\nCRITICAL CONTEXT: Build this lesson ONLY around this text:\n"""\n${fileContentSnippet.substring(0, 40000)}\n"""\n` : '';
+
+    // Build the professor identity block
+    const defaultPersona = { name: 'Prof. Nova', tag: 'Universal Expert', desc: 'World-class generalist who explains everything with vivid analogies, real examples, and infectious enthusiasm.' };
+    const prof = teacherPersona || defaultPersona;
     
-    const prompt = `You are the world's BEST interactive teacher — like a world-class professor who teaches with energy, real examples, and keeps students engaged by asking questions mid-lesson.
+    const personaBlock = `
+    YOUR IDENTITY — YOU ARE: ${prof.name} (${prof.tag})
+    TEACHING STYLE: ${prof.desc}
+    You MUST adopt this persona completely — your script voice, example type, analogy style, and depth must all reflect this exact expertise.
+    ${prof.tag.toLowerCase().includes('python') || prof.id === 'python' ? 'Use Python code examples. Reference Python libraries. Speak like a Pythonista.' : ''}
+    ${prof.tag.toLowerCase().includes('web') || prof.id === 'webdev' ? 'Use JavaScript/React/Node examples. Reference modern web technologies.' : ''}
+    ${prof.tag.toLowerCase().includes('data') || prof.id === 'datascience' ? 'Use data science examples, pandas/numpy references. Explain statistically.' : ''}
+    ${prof.tag.toLowerCase().includes('math') || prof.id === 'math' ? 'Use mathematical notation, proofs, and visual geometry to explain.' : ''}
+    ${prof.tag.toLowerCase().includes('ai') || prof.id === 'ai' ? 'Reference neural networks, transformers, training loops. Use ML analogies.' : ''}
+    `;
+    
+    const prompt = `${personaBlock}
+    
+    You are the world's BEST interactive teacher in your domain. Teach with energy, precision, and real concrete examples.
     Create a 6-8 scene interactive animated lesson about: "${topic}".
     ${textContext}
     
-    SCENE TYPES — pick the best per scene, USE "interactive" at least TWICE:
-    - "flow": Step-by-step pipeline with animated arrows. Use for processes, algorithms, how-things-work.
-    - "buildup": Stacking concepts that build on each other. Use for definitions, layers, hierarchy.
-    - "comparison": Side-by-side contrast. Use for pros/cons, A vs B, before/after.
-    - "code": Animated typing reveal. Use for syntax, formulas, commands.
-    - "concept": Central idea with radiating facts. Use for overviews, key concepts.
-    - "interactive": The teacher PAUSES and asks the student a question. The student must pick an answer. The teacher then gives personalized spoken feedback per choice.
+    SCENE TYPES — USE "interactive" at least TWICE (spread throughout):
+    - "flow": Step-by-step pipeline with animated arrows. Use for processes, algorithms.
+    - "buildup": Stacking concepts. Use for definitions, layers, hierarchy.
+    - "comparison": Side-by-side contrast. Use for A vs B, pros/cons.
+    - "code": Animated code reveal. Use for syntax, formulas, commands.
+    - "concept": Central idea with radiating facts. Use for overviews.
+    - "interactive": Teacher PAUSES, asks a question, student picks answer, teacher gives personalized spoken feedback.
     
     Return STRICT JSON (no markdown, no code blocks):
     {
-      "youtubeQuery": "a very targeted YouTube search for this topic",
+      "youtubeQuery": "targeted YouTube search for this specific topic",
       "scenes": [
         {
           "type": "teaching",
-          "teacherScript": "Enthusiastic 2-3 sentence spoken script. Address the student directly. Use real-world analogies. Base everything on the context provided.",
+          "teacherScript": "Enthusiastic spoken script in YOUR expert voice with real examples from your domain. 2-3 sentences.",
           "title": "Scene title",
-          "icon": "Single emoji",
+          "icon": "emoji",
           "animationType": "flow",
           "visualSteps": [
-            { "label": "Step label", "icon": "emoji", "description": "brief description" }
+            { "label": "Step", "icon": "emoji", "description": "brief" }
           ],
           "codeSnippet": "only if animationType is code",
-          "comparisonLeft": { "label": "Left label", "points": ["point1"] },
-          "comparisonRight": { "label": "Right label", "points": ["point1"] }
+          "comparisonLeft": { "label": "Left", "points": ["point"] },
+          "comparisonRight": { "label": "Right", "points": ["point"] }
         },
         {
           "type": "interactive",
-          "teacherScript": "Great! Before we move on, let me test your understanding. Here is a question for you...",
-          "title": "Quick Check! 🎯",
+          "teacherScript": "Alright! Let me put your understanding to the test. Here is a real-world question from this topic...",
+          "title": "Knowledge Check 🎯",
           "icon": "🤔",
-          "question": "A clear, specific question based strictly on what was just taught",
+          "question": "A specific, practical question about what was just taught",
           "choices": [
-            {
-              "text": "First answer option",
-              "isCorrect": false,
-              "teacherResponse": "Not quite! Here is a warm, encouraging explanation of why this is wrong and what the right thinking is. 2 sentences."
-            },
-            {
-              "text": "The correct answer option",
-              "isCorrect": true,
-              "teacherResponse": "Excellent! You are absolutely right! Here is why this is correct and a real-world example to reinforce it. 2 sentences."
-            },
-            {
-              "text": "Third answer option",
-              "isCorrect": false,
-              "teacherResponse": "Good thinking, but not quite. Here is the distinction you need to understand. 2 sentences."
-            },
-            {
-              "text": "Fourth answer option",
-              "isCorrect": false,
-              "teacherResponse": "That is a common misconception! Here is what is actually happening. 2 sentences."
-            }
+            { "text": "Option A", "isCorrect": false, "teacherResponse": "Warm, encouraging explanation why this is wrong. Real-world context. 2 sentences." },
+            { "text": "Option B (correct)", "isCorrect": true, "teacherResponse": "Enthusiastic confirmation! Reinforce with a real-world example. 2 sentences." },
+            { "text": "Option C", "isCorrect": false, "teacherResponse": "Good instinct but here is the key distinction. 2 sentences." },
+            { "text": "Option D", "isCorrect": false, "teacherResponse": "Common misconception! Here is the correct mental model. 2 sentences." }
           ]
         }
       ]
     }
     
     RULES:
-    - Use "interactive" scenes at least 2 times, spread throughout the lesson (not all at the end)
-    - Every teaching scene MUST have visualSteps (3-4 items) unless it is a "code" or "comparison" type
-    - The teacher should speak like an excited human, using phrases like "Think of it this way...", "Here is the cool part...", "You might be asking yourself..."
-    - ALL content MUST be derived from the provided context, not general knowledge`;
+    - Persona is EVERYTHING — every example must fit your domain (e.g., Python prof uses Python, Math prof uses equations)
+    - Use "interactive" scenes at least 2x, NOT at the end only
+    - Every teaching scene needs visualSteps (3-4 items) unless it is code/comparison type
+    - Speak like an excited human in teacherScript: "Here is the wild part...", "Think of it this way...", "I love this bit..."
+    - ALL factual content must come from the provided context text`;
 
     try {
       const text = await this.runWithFallback(prompt, true);
