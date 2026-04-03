@@ -99,20 +99,23 @@ class GeminiService {
     }
   }
 
-  async generateMasterclass(topic) {
+  async generateMasterclass(topic, fileContentSnippet = '') {
+    const textContext = fileContentSnippet ? `\nCRITICAL CONTEXT: Build this lesson specifically around this text:\n"""\n${fileContentSnippet.substring(0, 50000)}\n"""\n` : '';
+    
     const prompt = `You are the world's greatest practical tutor (like from Khan Academy or CrashCourse).
     Create a highly engaging, practical visual lesson about: "${topic}".
+    ${textContext}
     
     Return strict JSON matching this format EXACTLY:
     {
       "youtubeQuery": "A highly targeted YouTube search query to find the best real video tutorial for this topic",
       "scenes": [
         {
-          "teacherScript": "An enthusiastic, engaging spoken script tailored specifically for this slide. Speak directly to the student in 1st person. 2-3 sentences max per scene.",
+          "teacherScript": "An enthusiastic, engaging spoken script tailored specifically for this slide. Speak directly to the student in 1st person. 2-3 sentences max per scene. IT MUST BE FACTUALLY BASED ON THE CRITICAL CONTEXT PROVIDED.",
           "title": "Slide concept",
           "icon": "Emoji representation",
           "codeSnippet": "Optional practical code or formula to display",
-          "bulletPoints": ["Point 1", "Point 2"]
+          "bulletPoints": ["Point 1 derived from text", "Point 2 derived from text"]
         }
       ]
     }`;

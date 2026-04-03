@@ -19,21 +19,21 @@ const MasterclassPlayer = () => {
   
   const synthRef = useRef(window.speechSynthesis);
   
-  // We decode the topic from the URL parameter (e.g., /masterclass/Photosynthesis)
-  const topic = decodeURIComponent(id || 'General Educational Material');
+  // Identify the material ID from the URL
+  const materialId = id;
 
   useEffect(() => {
     fetchMasterclass();
     return () => {
       if (synthRef.current) synthRef.current.cancel();
     };
-  }, [topic, token]);
+  }, [materialId, token]);
 
   const fetchMasterclass = async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await apiClient.post('/ai/masterclass', { topic }, { token });
+      const response = await apiClient.post('/ai/masterclass', { materialId }, { token });
       setData(response);
     } catch (err) {
       setError(err.message || 'Failed to initialize the AI Masterclass.');
@@ -152,7 +152,7 @@ const MasterclassPlayer = () => {
                <div className="text-xs font-black text-primary-500 uppercase tracking-widest flex items-center gap-2">
                  <Volume2 className="w-3 h-3" /> Honey AI Interactive Lesson
                </div>
-               <h1 className="text-xl font-bold truncate max-w-sm md:max-w-2xl">{topic}</h1>
+               <h1 className="text-xl font-bold truncate max-w-sm md:max-w-2xl">{data.topic || 'Masterclass'}</h1>
             </div>
          </div>
       </header>
