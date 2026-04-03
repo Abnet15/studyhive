@@ -1,63 +1,59 @@
-# StudyHive API
+# StudyHive Backend API
 
-Node.js + Express backend paired with the StudyHive React frontend. Provides authentication, course/material management, badges, and analytics backed by MySQL (XAMPP compatible).
+This is the Node.js + Express backend powering the StudyHive API. It provides a robust, fully-hardened MongoDB and Cloudinary backend equipped with an Askuala AI fallback engine.
 
-## Quick start
+## 🚀 Quick Start for Frontend Developers
 
-1. Install dependencies:
-   ```bash
-   cd backend
-   npm install
-   ```
-2. Create a database:
-   ```bash
-   mysql -u root -p < db/schema.sql
-   ```
-3. Copy `env.example` to `.env` and update credentials (DB, JWT secret, allowed client origin).
-4. Start the API:
-   ```bash
-   npm run dev
-   ```
-   The server listens on port `5000` by default.
+If you are working on the React frontend, here is everything you need to get the backend running locally:
 
-## Environment variables
+### 1. Requirements
+- Node.js v18+
+- Active **MongoDB** instance (Local port `27017` or Atlas URI)
+- No SQL or XAMPP is needed anymore.
 
-| Name | Description |
-| --- | --- |
-| `PORT` | API port |
-| `CLIENT_URL` | Comma-separated list of allowed front-end origins |
-| `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` | MySQL credentials |
-| `JWT_SECRET`, `JWT_EXPIRES_IN` | Token configuration |
-| `UPLOAD_MAX_SIZE_MB` | Upload size limit (default 25 MB) |
+### 2. Environment Variables (`backend/.env`)
+Create your `.env` file in the `backend/` folder. It must contain these keys:
+```env
+# Server
+PORT=5000
+CLIENT_URL=http://localhost:5173
+NODE_ENV=development
 
-## Available scripts
+# Database
+MONGODB_URI=mongodb://localhost:27017/studyhive
 
-- `npm run dev` – Nodemon development server
-- `npm start` – Production server
+# Auth
+JWT_SECRET=super_secret_dev_key
+JWT_EXPIRES_IN=7d
 
-## API overview
+# File Uploads (REQUIRED)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_sec
 
-- `POST /api/auth/register` – Create an account
-- `POST /api/auth/login` – Issue JWT
-- `GET /api/auth/me` – Fetch authenticated profile
-- `GET /api/courses` – List courses (with filters)
-- `POST /api/courses` – Admin only, create course
-- `GET /api/materials` – List resources
-- `POST /api/materials` – Upload resource (file upload supported)
-- `POST /api/materials/:id/rate` – Rate a resource
-- `POST /api/materials/:id/bookmark` – Bookmark/Unbookmark
-- `GET /api/dashboard/summary` – Admin analytics
+# AI Summarization (REQUIRED)
+GEMINI_API_KEY=your_gemini_key
+```
 
-See route files under `src/routes` for the complete list and payload expectations.
+### 3. Bootstrap & Seed the Database
+Instead of manually creating test users or typing out materials, run the seed script!
+```bash
+npm install
+node src/scripts/seed.js
+```
+*This instantly deletes old data and creates 5 departments, 8 courses, admin users, and students.*
 
-## File uploads
+**Login Credentials from Seed:**
+- Admin: `admin@studyhive.com` / `password`
+- Student: `alem@example.com` / `password`
 
-Uploaded files are stored under `backend/uploads`. In production swap the storage adapter (e.g., S3) by editing `src/middleware/upload.js`.
+### 4. Start Server
+```bash
+npm run dev
+```
 
-## Recommended improvements
+## 📚 Required Context for Collaboration
+If you are modifying models or API routes, please read the root `STUDYHIVE_MASTER_CONTEXT.md` document first. It is our single-source-of-truth.
 
-- Implement refresh tokens and email verification
-- Add pagination to materials and course listing
-- Add scheduled job to recompute badge assignments
-- Wire the React contexts to these REST endpoints (e.g., via React Query) for live data
-
+## 📡 API Interactions
+- See **`API_DOCUMENTATION.md`** (in this folder) for exact JSON structures and REST payloads for frontend development.
