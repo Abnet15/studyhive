@@ -18,24 +18,23 @@ const MasterclassPlayer = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   
   const synthRef = useRef(window.speechSynthesis);
-  const utteranceRef = useRef(null);
-
+  
   // We decode the topic from the URL parameter (e.g., /masterclass/Photosynthesis)
   const topic = decodeURIComponent(id || 'General Educational Material');
 
   useEffect(() => {
     fetchMasterclass();
-    return () => stopAudio(); // cleanup on unmount
+    return () => {
+      if (synthRef.current) synthRef.current.cancel();
+    };
   }, [topic, token]);
 
   const fetchMasterclass = async () => {
     setLoading(true);
     setError('');
     try {
-      // POST request to backend AI endpoint
       const response = await apiClient.post('/ai/masterclass', { topic }, { token });
       setData(response);
-      prepareAudio(response.teacherScript);
     } catch (err) {
       setError(err.message || 'Failed to initialize the AI Masterclass.');
     } finally {
@@ -43,9 +42,19 @@ const MasterclassPlayer = () => {
     }
   };
 
-  const prepareAudio = (script) => {
-    if (!synthRef.current) return;
-    const utterance = new SpeechSynthesisUtterance(script);
+  // Play a specific scene index sequentially
+  const playScene = (index) => {
+    if (!data || !data.scenes || index >= data.scenes.length || !synthRef.current) {
+      setIsPlaying(false);
+      return;
+    }
+
+    setCurrentSlide(index);
+    synthRef.current.cancel(); // Stop anything currently playing
+
+    const scene = data.scenes[index];
+    const utterance = new SpeechSynthesisUtterance(scene.teacherScript);
+    
     utterance.rate = 1.0;
     utterance.pitch = 1.1; // Slightly enthusiastic
     
@@ -54,27 +63,26 @@ const MasterclassPlayer = () => {
     const preferredVoice = voices.find(v => v.name.includes('Google') || v.name.includes('Microsoft') && v.lang === 'en-US');
     if (preferredVoice) utterance.voice = preferredVoice;
 
-    // Hook onto boundaries to advance slides automatically based on time/words
-    utterance.onboundary = (event) => {
-      if (data && data.visualSlides) {
-        // Roughly advance slides based on character position in the script
-        const progress = event.charIndex / script.length;
-        const totalSlides = data.visualSlides.length;
-        const calculatedSlide = Math.floor(progress * totalSlides);
-        if (calculatedSlide !== currentSlide && calculatedSlide < totalSlides) {
-          setCurrentSlide(calculatedSlide);
-        }
+    // When the current scene finishes speaking, move to the next slide automatically
+    utterance.onend = () => {
+      if (index + 1 < data.scenes.length) {
+        playScene(index + 1);
+      } else {
+        setIsPlaying(false); // Presentation finished
       }
     };
 
-    utterance.onend = () => setIsPlaying(false);
-    utterance.onerror = () => setIsPlaying(false);
-    
-    utteranceRef.current = utterance;
+    utterance.onerror = (e) => {
+      console.error('Speech synthesis error', e);
+      setIsPlaying(false);
+    };
+
+    setIsPlaying(true);
+    synthRef.current.speak(utterance);
   };
 
   const togglePlay = () => {
-    if (!synthRef.current || !utteranceRef.current) return;
+    if (!synthRef.current) return;
 
     if (isPlaying) {
       synthRef.current.pause();
@@ -82,10 +90,11 @@ const MasterclassPlayer = () => {
     } else {
       if (synthRef.current.paused) {
         synthRef.current.resume();
+        setIsPlaying(true);
       } else {
-        synthRef.current.speak(utteranceRef.current);
+        // Start from current slide if not already playing
+        playScene(currentSlide);
       }
-      setIsPlaying(true);
     }
   };
 
@@ -93,12 +102,6 @@ const MasterclassPlayer = () => {
     if (synthRef.current) {
       synthRef.current.cancel();
       setIsPlaying(false);
-    }
-  };
-
-  const nextSlide = () => {
-    if (data && currentSlide < data.visualSlides.length - 1) {
-      setCurrentSlide(prev => prev + 1);
     }
   };
 
@@ -131,7 +134,7 @@ const MasterclassPlayer = () => {
     );
   }
 
-  const slide = data.visualSlides[currentSlide] || data.visualSlides[0];
+  const scene = data.scenes[currentSlide] || data.scenes[0];
 
   return (
     <div className="min-h-screen bg-[#020617] text-white flex flex-col overflow-hidden relative">
@@ -168,26 +171,26 @@ const MasterclassPlayer = () => {
                  transition={{ duration: 0.5, type: 'spring' }}
                  className="max-w-4xl mx-auto w-full glass-card p-12 md:p-20 rounded-[3rem] border border-white/10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] relative overflow-hidden bg-white/5"
                >
-                  <div className="absolute -top-32 -right-32 text-[20rem] opacity-5 rotate-12 blur-sm pointer-events-none">{slide.icon || '💡'}</div>
+                  <div className="absolute -top-32 -right-32 text-[20rem] opacity-5 rotate-12 blur-sm pointer-events-none">{scene.icon || '💡'}</div>
                   
                   <div className="relative z-10 space-y-10">
                      <span className="inline-block p-4 bg-primary-500/20 text-primary-400 rounded-3xl text-6xl shadow-inner border border-primary-500/20">
-                       {slide.icon || '💡'}
+                       {scene.icon || '💡'}
                      </span>
                      
                      <h2 className="text-4xl md:text-5xl font-black tracking-tight leading-tight">
-                        {slide.title}
+                        {scene.title}
                      </h2>
 
-                     {slide.codeSnippet && (
-                       <div className="p-8 bg-[#0B1121]/80 rounded-3xl border border-white/10 font-mono text-sm shadow-xl overflow-x-auto text-emerald-400">
-                         {slide.codeSnippet}
+                     {scene.codeSnippet && (
+                       <div className="p-8 bg-[#0B1121]/80 rounded-3xl border border-white/10 font-mono text-sm shadow-xl overflow-x-auto text-emerald-400 border-l-4 border-l-primary-500">
+                         {scene.codeSnippet}
                        </div>
                      )}
 
-                     {slide.bulletPoints && slide.bulletPoints.length > 0 && (
+                     {scene.bulletPoints && scene.bulletPoints.length > 0 && (
                        <ul className="space-y-4">
-                          {slide.bulletPoints.map((bp, idx) => (
+                          {scene.bulletPoints.map((bp, idx) => (
                              <motion.li 
                                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + (idx * 0.1) }}
                                key={idx} className="flex gap-4 text-xl text-slate-300 font-medium items-start"
@@ -204,9 +207,9 @@ const MasterclassPlayer = () => {
 
             {/* AI Teacher Transcript (Subtitles) */}
             <div className="mt-12 max-w-4xl mx-auto w-full text-center">
-               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="px-8 py-6 rounded-3xl bg-slate-900/60 border border-white/5 shadow-inner">
+               <motion.div key={currentSlide} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="px-8 py-6 rounded-3xl bg-slate-900/60 border border-white/5 shadow-inner">
                  <p className="text-lg md:text-xl font-medium text-slate-300 leading-relaxed max-h-32 overflow-y-auto custom-scrollbar">
-                   "{data.teacherScript}"
+                   "{scene.teacherScript}"
                  </p>
                </motion.div>
             </div>
@@ -225,17 +228,28 @@ const MasterclassPlayer = () => {
                  {isPlaying ? <Pause className="w-10 h-10" /> : <Play className="w-10 h-10 ml-2" />}
                </button>
                <div className="flex gap-4 mt-4 w-full">
-                 <button onClick={() => stopAudio()} className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-bold transition-colors">Stop</button>
-                 <button onClick={nextSlide} className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-bold transition-colors">Next Slide</button>
+                 <button onClick={stopAudio} className="flex-1 py-3 bg-white/5 hover:bg-white/10 hover:text-red-400 rounded-xl text-sm font-bold transition-colors">Stop</button>
+                 <button 
+                   onClick={() => {
+                     stopAudio();
+                     if (currentSlide < data.scenes.length - 1) playScene(currentSlide + 1);
+                   }} 
+                   className="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-bold transition-colors"
+                 >
+                   Next Slide
+                 </button>
                </div>
             </div>
 
             {/* Slide Navigation Dots */}
             <div className="flex flex-wrap gap-2 justify-center py-4">
-               {data.visualSlides.map((_, idx) => (
+               {data.scenes.map((_, idx) => (
                  <button 
                    key={idx}
-                   onClick={() => setCurrentSlide(idx)}
+                   onClick={() => {
+                     stopAudio();
+                     playScene(idx);
+                   }}
                    className={`h-2 rounded-full transition-all duration-300 ${idx === currentSlide ? 'w-8 bg-primary-500 shadow-[0_0_10px_rgba(14,165,233,0.8)]' : 'w-2 bg-slate-700 hover:bg-slate-500'}`}
                  />
                ))}
@@ -247,7 +261,7 @@ const MasterclassPlayer = () => {
                <Video className="w-8 h-8 text-[#FF0000] mb-4" />
                <h4 className="font-bold text-white mb-2">Watch Real Examples</h4>
                <p className="text-sm text-slate-400 leading-tight">
-                  Click to open the best YouTube tutorials for: <span className="font-medium text-slate-300">"{data.youtubeQuery}"</span>
+                  Click to drop-in to the best YouTube tutorials for: <span className="font-medium text-slate-300">"{data.youtubeQuery}"</span>
                </p>
             </div>
          </div>

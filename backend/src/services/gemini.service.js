@@ -104,11 +104,16 @@ class GeminiService {
     
     Return strict JSON matching this format EXACTLY:
     {
-      "teacherScript": "An enthusiastic, engaging spoken script that explains this practically. Speak directly to the student in 1st person. Make it 2-3 paragraphs. Explain an analogy.",
-      "visualSlides": [
-        { "title": "Slide concept", "icon": "Emoji representation", "codeSnippet": "Optional practical code or formula to display", "bulletPoints": ["Point 1", "Point 2"] }
-      ],
-      "youtubeQuery": "A highly targeted YouTube search query to find the best real video tutorial for this topic"
+      "youtubeQuery": "A highly targeted YouTube search query to find the best real video tutorial for this topic",
+      "scenes": [
+        {
+          "teacherScript": "An enthusiastic, engaging spoken script tailored specifically for this slide. Speak directly to the student in 1st person. 2-3 sentences max per scene.",
+          "title": "Slide concept",
+          "icon": "Emoji representation",
+          "codeSnippet": "Optional practical code or formula to display",
+          "bulletPoints": ["Point 1", "Point 2"]
+        }
+      ]
     }`;
 
     try {

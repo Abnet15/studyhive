@@ -8,7 +8,7 @@ import { useToast } from '../components/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, DownloadCloud, Share2, Sparkles, BrainCircuit, 
-  FileText, Calendar, HardDrive, UserCircle, Star, BadgeCheck, Bookmark, BookmarkCheck, PlayCircle
+  FileText, Calendar, HardDrive, UserCircle, Star, BadgeCheck, Bookmark, BookmarkCheck, PlayCircle, Target
 } from 'lucide-react';
 import { apiClient } from '../services/apiClient';
 
