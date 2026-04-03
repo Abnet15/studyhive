@@ -53,7 +53,7 @@ exports.analyzeFile = async (req, res, next) => {
     if (!req.file) throw new ApiError(400, 'No file uploaded for analysis');
     
     const fileUrl = req.file.path; // from multer
-    const extractedText = await extractTextFromFile(fileUrl);
+    const extractedText = await extractTextFromFile(fileUrl, req.file.originalname);
     
     if (!extractedText || extractedText.trim().length === 0) {
        throw new ApiError(400, "Could not extract text from the file.");

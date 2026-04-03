@@ -159,7 +159,7 @@ const createMaterial = asyncHandler(async (req, res) => {
   // Honey AI — generate Smart Summary (never crashes upload)
   let aiData = { aiSummary: null, aiKeyTerms: [], aiTopics: [], aiContentValid: true, aiQuiz: [] };
   try {
-    aiData = await generateSmartSummary(fileUrl, title);
+    aiData = await generateSmartSummary(fileUrl, title, originalName);
     
     // CONTENT VALIDATION GATE
     if (aiData.aiContentValid === false) {

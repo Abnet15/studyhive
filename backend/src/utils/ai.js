@@ -47,7 +47,7 @@ const fs = require('fs');
 const path = require('path');
 const mammoth = require('mammoth');
 
-async function extractTextFromFile(fileUrl) {
+async function extractTextFromFile(fileUrl, originalName = '') {
   try {
     let dataBuffer;
 
@@ -70,10 +70,12 @@ async function extractTextFromFile(fileUrl) {
     }
 
     const lowerCaseUrl = fileUrl.toLowerCase();
-    if (lowerCaseUrl.includes('.pdf')) {
+    const lowerCaseName = originalName.toLowerCase();
+    
+    if (lowerCaseUrl.includes('.pdf') || lowerCaseName.includes('.pdf')) {
       const data = await pdfParse(dataBuffer);
       return data.text;
-    } else if (lowerCaseUrl.includes('.doc') || lowerCaseUrl.includes('.docx')) {
+    } else if (lowerCaseUrl.includes('.doc') || lowerCaseUrl.includes('.docx') || lowerCaseName.includes('.doc') || lowerCaseName.includes('.docx')) {
       const result = await mammoth.extractRawText({ buffer: dataBuffer });
       return result.value;
     } else {
@@ -89,7 +91,7 @@ async function extractTextFromFile(fileUrl) {
  * Parses file and generates: Summary, Key Terms, Topics, Quiz, and Content Validation
  * Quiz questions are STRICTLY derived from the actual file content.
  */
-const generateSmartSummary = async (filePath, title) => {
+const generateSmartSummary = async (filePath, title, originalName = '') => {
   if (!genAI) {
     console.log('[Honey AI] No API key found. Using Mock AI Response.');
     return {
@@ -101,7 +103,7 @@ const generateSmartSummary = async (filePath, title) => {
     };
   }
 
-  const fileText = await extractTextFromFile(filePath);
+  const fileText = await extractTextFromFile(filePath, originalName);
   const truncatedText = fileText.substring(0, 100000);
   
   // We no longer fiercely block short text files (since this is an MVP hackathon demo where 
