@@ -26,18 +26,18 @@ async function generateWithFallback(prompt) {
 
   for (const modelName of MODEL_HIERARCHY) {
     try {
-      console.log(`[Askuala AI] Attempting generation with model: ${modelName} `);
+      console.log(`[Honey AI] Attempting generation with model: ${modelName} `);
       const model = genAI.getGenerativeModel({ model: modelName });
       
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
       
-      console.log(`[Askuala AI] Success using ${modelName}!`);
+      console.log(`[Honey AI] Success using ${modelName}!`);
       return text;
       
     } catch (err) {
-      console.warn(`[Askuala AI] Error using ${modelName}: ${err.message}. Falling back to next best model...`);
+      console.warn(`[Honey AI] Error using ${modelName}: ${err.message}. Falling back to next best model...`);
     }
   }
 
@@ -62,7 +62,7 @@ async function extractTextFromFile(fileUrl) {
       return dataBuffer.toString('utf8');
     }
   } catch (err) {
-    console.error('[Askuala AI] Failed to extract text from URL:', err.message);
+    console.error('[Honey AI] Failed to extract text from URL:', err.message);
     return "";
   }
 }
@@ -72,10 +72,10 @@ async function extractTextFromFile(fileUrl) {
  */
 const generateSmartSummary = async (filePath, title) => {
   if (!genAI) {
-    console.log('[Askuala AI] No API key found. Using Mock AI Response.');
+    console.log('[Honey AI] No API key found. Using Mock AI Response.');
     return {
       aiSummary: `This is a mock AI summary for ${title} because no GEMINI_API_KEY is detected.`,
-      aiKeyTerms: [title, 'Mock', 'Askuala', 'AI'],
+      aiKeyTerms: [title, 'Mock', 'Honey', 'AI'],
       aiQuiz: []
     };
   }
@@ -117,7 +117,7 @@ const generateSmartSummary = async (filePath, title) => {
 
     return JSON.parse(cleanedJsonString);
   } catch (error) {
-    console.error('[Askuala AI] Critical Error generating Smart Summary:', error);
+    console.error('[Honey AI] Critical Error generating Smart Summary:', error);
     
     // Graceful fallback
     return {

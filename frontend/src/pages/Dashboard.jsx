@@ -60,7 +60,7 @@ const Dashboard = () => {
               </p>
            </div>
            <Link to="/ai-assistant" className="btn-primary py-4 px-8 shadow-primary-500/30 font-bold tracking-wide">
-              <Sparkles className="w-5 h-5"/> Askuala AI Console
+              <Sparkles className="w-5 h-5"/> Honey AI Console
            </Link>
         </motion.header>
 
@@ -160,7 +160,7 @@ const Dashboard = () => {
                         name={badge.name}
                         icon={badge.icon}
                         description={badge.description}
-                        earned={isBadgeEarned(badge, totalUploads, Number(avgRating), totalDownloads)}
+                        earned={isBadgeEarned(badge, { totalUploads, avgRating: Number(avgRating), totalDownloads })}
                       />
                     ))}
                   </div>

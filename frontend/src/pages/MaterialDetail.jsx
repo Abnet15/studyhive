@@ -34,7 +34,7 @@ const MaterialDetail = () => {
       <div className="min-h-screen flex items-center justify-center px-4 bg-slate-50 dark:bg-[#030712]">
         <div className="flex flex-col items-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary-500 mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-400 font-bold animate-pulse">Loading Askuala Data...</p>
+          <p className="text-slate-600 dark:text-slate-400 font-bold animate-pulse">Loading Honey AI Data...</p>
         </div>
       </div>
     );
@@ -196,7 +196,7 @@ const MaterialDetail = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
            
-           {/* ───── Left Column (AI Askuala Hub) ───── */}
+           {/* ───── Left Column (AI Honey Hub) ───── */}
            <motion.div initial="hidden" animate="visible" variants={fadeIn} transition={{ delay: 0.2 }} className="lg:col-span-2 space-y-8">
               
               {hasAI ? (
@@ -274,7 +274,7 @@ const MaterialDetail = () => {
                       <BrainCircuit className="w-10 h-10 text-slate-400"/>
                    </div>
                    <h3 className="text-2xl font-bold text-slate-800 dark:text-white">Legacy Material</h3>
-                   <p className="text-slate-500 max-w-md mx-auto">This material was uploaded before the Askuala AI integration. No smart summaries or quizzes were generated.</p>
+                   <p className="text-slate-500 max-w-md mx-auto">This material was uploaded before the Honey AI integration. No smart summaries or quizzes were generated.</p>
                 </div>
               )}
 

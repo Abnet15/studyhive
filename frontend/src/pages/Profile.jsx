@@ -10,8 +10,8 @@ import { Settings, BookOpen, ShieldCheck, Mail, Star, Download, TrendingUp } fro
 
 const Profile = () => {
   const { user } = useAuth();
-  const { materials, loading: matLoading } = useMaterials();
-  const { badges, loading: badgeLoading } = useBadges();
+  const { materials, materialsLoading } = useMaterials();
+  const { badges, badgesLoading } = useBadges();
 
   const userMaterials = useMemo(
     () => materials.filter((m) => m.uploader_id === user?.id),
@@ -31,7 +31,7 @@ const Profile = () => {
     () =>
       badges.map((b) => ({
         ...b,
-        earned: isBadgeEarned(b, stats.totalUploads, Number(stats.avgRating), stats.totalDownloads),
+        earned: isBadgeEarned(b, { totalUploads: stats.totalUploads, avgRating: Number(stats.avgRating), totalDownloads: stats.totalDownloads }),
       })),
     [badges, stats]
   );
@@ -129,7 +129,7 @@ const Profile = () => {
                  <Link to="/upload" className="text-xs font-black text-primary-500 uppercase tracking-[0.2em] hover:translate-x-2 transition-transform">+ Upload More</Link>
               </div>
 
-              {matLoading ? (
+              {materialsLoading ? (
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {[1,2,3,4].map(i => <div key={i} className="h-64 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-[2.5rem]"></div>)}
                  </div>
@@ -155,7 +155,7 @@ const Profile = () => {
               <h2 className="text-2xl font-black text-slate-900 dark:text-white px-2">Unlockables.</h2>
               
               <div className="grid grid-cols-1 gap-4">
-                 {badgeLoading ? (
+                 {badgesLoading ? (
                     <div className="space-y-4">
                        {[1,2,3].map(i => <div key={i} className="h-24 bg-slate-100 dark:bg-slate-800 animate-pulse rounded-3xl"></div>)}
                     </div>

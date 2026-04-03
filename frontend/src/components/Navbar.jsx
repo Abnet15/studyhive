@@ -50,7 +50,7 @@ const Navbar = () => {
     : [
         { name: 'Home', path: user ? '/dashboard' : '/', icon: <Home className="w-5 h-5"/> },
         { name: 'Courses', path: '/courses', icon: <BookOpen className="w-5 h-5"/> },
-        { name: 'Askuala AI', path: '/ai-assistant', icon: <BrainCircuit className="w-5 h-5"/>, highlight: true },
+        { name: 'Honey AI', path: '/ai-assistant', icon: <BrainCircuit className="w-5 h-5"/>, highlight: true },
         { name: 'Upload', path: '/upload', icon: <UploadCloud className="w-5 h-5"/> },
       ];
 

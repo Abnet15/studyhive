@@ -49,7 +49,7 @@ const Footer = () => {
             <ul className="space-y-4">
               <li><Link to="/courses" className="text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors">Course Catalog</Link></li>
               <li><Link to="/upload" className="text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors">Upload Material</Link></li>
-              <li><Link to="/ai-assistant" className="text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors flex items-center gap-2">Askuala AI <span className="px-2 py-0.5 rounded-full bg-accent-100 text-accent-700 text-[10px] font-bold">NEW</span></Link></li>
+              <li><Link to="/ai-assistant" className="text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors flex items-center gap-2">Honey AI <span className="px-2 py-0.5 rounded-full bg-accent-100 text-accent-700 text-[10px] font-bold">NEW</span></Link></li>
             </ul>
           </div>
 

@@ -86,7 +86,7 @@ const Landing = () => {
                       <BrainCircuit className="w-7 h-7 animate-pulse" />
                    </div>
                    <div>
-                      <div className="font-bold text-lg text-slate-900 dark:text-white">Askuala AI Assistant</div>
+                      <div className="font-bold text-lg text-slate-900 dark:text-white">Honey AI Assistant</div>
                       <div className="flex items-center gap-2 mt-1">
                          <span className="w-2 h-2 rounded-full bg-green-500 animate-ping"></span>
                          <span className="text-xs text-green-500 font-bold uppercase tracking-widest">Active & Ready</span>
@@ -121,7 +121,7 @@ const Landing = () => {
               initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeIn}
               className="text-center mb-20 space-y-4"
             >
-               <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-white tracking-tight">Meet <span className="gradient-text">Askuala AI</span></h2>
+               <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-white tracking-tight">Meet <span className="gradient-text">Honey AI</span></h2>
                <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-lg md:text-xl">
                   Stop reading endless PDFs. StudyHive extracts what matters instantly.
                </p>
@@ -133,7 +133,7 @@ const Landing = () => {
             >
                {[
                  { title: 'Smart Summaries', desc: 'Instantly get the core concepts of a 50-page document condensed into a 2-minute read.', icon: <BrainCircuit className="w-8 h-8 text-white"/>, color: 'from-blue-500 to-cyan-400' },
-                 { title: 'Auto Flashcards', desc: 'Askuala AI automatically scans uploads and extracts the 5 most critical terms.', icon: <Sparkles className="w-8 h-8 text-white"/>, color: 'from-purple-500 to-pink-500' },
+                 { title: 'Auto Flashcards', desc: 'Honey AI automatically scans uploads and extracts the 5 most critical terms.', icon: <Sparkles className="w-8 h-8 text-white"/>, color: 'from-purple-500 to-pink-500' },
                  { title: 'Exam Generator', desc: 'Test your knowledge on the fly with auto-generated multiple-choice quizzes.', icon: <Target className="w-8 h-8 text-white"/>, color: 'from-orange-500 to-amber-500' }
                ].map((item, idx) => (
                  <motion.div key={idx} variants={fadeIn} className="glass-card p-10 group hover:-translate-y-3 transition-all duration-500 hover:shadow-2xl hover:shadow-primary-500/10">
