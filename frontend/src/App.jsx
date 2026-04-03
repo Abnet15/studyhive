@@ -20,6 +20,7 @@ import AboutUs from './pages/AboutUs';
 import Admin from './pages/Admin';
 import AIAssistant from './pages/AIAssistant';
 import MasterclassPlayer from './pages/MasterclassPlayer';
+import HoneyTeacher from './pages/HoneyTeacher';
 
 function AuthGate({ children, fallback }) {
   const { authLoading } = useAuth();
@@ -61,6 +62,7 @@ function AppRoutes() {
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/about" element={<AboutUs />} />
+              <Route path="/honey-teacher" element={<HoneyTeacher />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
@@ -71,7 +73,7 @@ function AppRoutes() {
               <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
               <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
               <Route path="/ai-assistant" element={<PrivateRoute><AIAssistant /></PrivateRoute>} />
-              <Route path="/masterclass/:id" element={<PrivateRoute><MasterclassPlayer /></PrivateRoute>} />
+              <Route path="/masterclass/:id" element={<MasterclassPlayer />} />
             </Routes>
           </AuthGate>
         </main>

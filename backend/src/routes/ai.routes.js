@@ -17,4 +17,7 @@ router.post('/analyze-file', requireAuth, upload.single('file'), analyzeFile);
 router.post('/chat', requireAuth, chat);
 router.post('/masterclass', requireAuth, generateMasterclass);
 
+// ── Public endpoint: no login required — powers the Honey Teacher demo page
+router.post('/public-masterclass', generateMasterclass);
+
 module.exports = router;

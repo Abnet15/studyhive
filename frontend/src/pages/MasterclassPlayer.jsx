@@ -313,7 +313,7 @@ const MasterclassPlayer = () => {
     setProfessor(prof);
     setLoading(true); setError('');
     try {
-      const response = await apiClient.post('/ai/masterclass', {
+      const response = await apiClient.post('/ai/public-masterclass', {
         materialId: id,
         teacherPersona: {
           id: prof.id,
@@ -321,7 +321,7 @@ const MasterclassPlayer = () => {
           tag: prof.tag,
           desc: prof.desc,
         }
-      }, { token });
+      });
       setData(response);
     } catch (err) {
       setError(err.message || 'Failed to initialize the AI Masterclass.');
