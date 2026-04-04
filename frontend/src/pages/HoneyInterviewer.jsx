@@ -119,7 +119,12 @@ const HoneyInterviewer = () => {
     formData.append('history', JSON.stringify(history));
     
     let finalContext = contextText;
-    if (mode === 'interview') finalContext += `\n\nLANGUAGE REQUEST: Please conduct this interview and speak exactly in ${language}.`;
+    if (mode === 'interview') {
+      finalContext += `\n\nLANGUAGE REQUEST: Please conduct this interview and speak exactly in ${language}. `;
+      if (language === 'Amharic') {
+         finalContext += `IMPORTANT: Speak naturally and idiomatically like a native Ethiopian person. Avoid robotic or direct translations. Use polite conversational Amharic script (አማርኛ) perfectly.`;
+      }
+    }
     
     if (finalContext) formData.append('context', finalContext);
     if (selectedFile && mode === 'interview') formData.append('file', selectedFile);
@@ -156,10 +161,19 @@ const HoneyInterviewer = () => {
     const langPrefixes = { 'English': 'en', 'Amharic': 'am', 'French': 'fr', 'Spanish': 'es', 'German': 'de' };
     const targetPrefix = mode === 'interview' ? (langPrefixes[language] || 'en') : 'en';
 
+    const langCodesExact = { 'English': 'en-US', 'Amharic': 'am-ET', 'French': 'fr-FR', 'Spanish': 'es-ES', 'German': 'de-DE' };
+    u.lang = mode === 'interview' ? (langCodesExact[language] || 'en-US') : 'en-US';
+
     const voices = synthRef.current.getVoices();
     let best = voices.find(v => v.lang.startsWith(targetPrefix) && (v.name.includes('Google') || v.name.includes('Microsoft')));
     if (!best) best = voices.find(v => v.lang.startsWith(targetPrefix));
     
+    // Explicitly fallback to Google/Microsoft Amharic voice if it exists
+    if (language === 'Amharic') {
+      const amVoice = voices.find(v => v.lang === 'am-ET' || v.name.includes('Amharic') || v.name.includes('am-ET'));
+      if (amVoice) best = amVoice;
+    }
+
     if (best) u.voice = best;
 
     u.onstart = () => setIsSpeaking(true);
