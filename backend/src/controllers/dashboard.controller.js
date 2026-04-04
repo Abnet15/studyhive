@@ -1,5 +1,6 @@
 const Material = require('../models/Material.model');
 const User = require('../models/User.model');
+const ExamScore = require('../models/ExamScore.model');
 const asyncHandler = require('../utils/asyncHandler');
 
 const summary = asyncHandler(async (_req, res) => {
@@ -47,6 +48,26 @@ const summary = asyncHandler(async (_req, res) => {
   });
 });
 
+const studentSummary = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const userMaterials = await Material.find({ uploader_id: userId });
+  const totalUploads = userMaterials.length;
+  const totalDownloads = userMaterials.reduce((sum, m) => sum + (m.downloads || 0), 0);
+  
+  const latestExam = await ExamScore.findOne({ user_id: userId }).sort({ createdAt: -1 });
+  const exitReadiness = latestExam && latestExam.totalMaxScore > 0 
+    ? Math.round((latestExam.totalScore / latestExam.totalMaxScore) * 100)
+    : 0; // Default to 0 if no exams taken
+
+  res.json({
+    totalUploads,
+    totalDownloads,
+    exitReadiness
+  });
+});
+
 module.exports = {
   summary,
+  studentSummary,
 };

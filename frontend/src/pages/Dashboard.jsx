@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -11,22 +11,42 @@ import { BookOpen, Star, Download, Sparkles, ChevronRight, Bot, Target, Flame } 
 import StudyPulse from '../components/StudyPulse';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { materials, materialsLoading } = useMaterials();
   const { courses } = useCourses();
   const { badges, badgesLoading } = useBadges();
+
+  const [dashboardData, setDashboardData] = useState({
+    totalUploads: 0,
+    totalDownloads: 0,
+    exitReadiness: 0
+  });
+
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        const url = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const res = await fetch(`${url}/dashboard/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setDashboardData(data);
+        }
+      } catch (e) {
+        console.error("Failed to fetch dashboard summary", e);
+      }
+    };
+    if (token) fetchSummary();
+  }, [token]);
+
+  const { totalUploads, totalDownloads, exitReadiness } = dashboardData;
 
   const sortedMaterials = [...(materials || [])].sort(
     (a, b) => new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime()
   );
   const recentMaterials = sortedMaterials.slice(0, 4);
   const recommendedCourses = (courses || []).slice(0, 3);
-  const userMaterials = user ? (materials || []).filter((m) => m.uploader_id === user.id) : [];
-  const totalDownloads = userMaterials.reduce((sum, m) => sum + (m.downloads || 0), 0);
-  const avgRating = userMaterials.length > 0
-    ? (userMaterials.reduce((sum, m) => sum + (m.rating || 0), 0) / userMaterials.length).toFixed(1)
-    : '0.0';
-  const totalUploads = userMaterials.length;
 
   // ── GAMIFICATION: Honey Drops & Dynamic Rank ──
   const honeyDrops = (totalUploads * 150) + (totalDownloads * 25) + 450;
@@ -97,12 +117,12 @@ const Dashboard = () => {
               <div className="flex justify-between items-start mb-6">
                  <div className="space-y-1">
                     <div className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px]">Exit Readiness</div>
-                    <div className="text-4xl font-black text-slate-900 dark:text-white">82<span className="text-xl text-slate-400 font-extrabold">%</span></div>
+                    <div className="text-4xl font-black text-slate-900 dark:text-white">{exitReadiness}<span className="text-xl text-slate-400 font-extrabold">%</span></div>
                  </div>
                  <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 group-hover:scale-110 transition-transform"><Target className="w-6 h-6"/></div>
               </div>
               <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                 <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 w-[82%] rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
+                 <div className={`h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]`} style={{ width: `${exitReadiness}%` }}></div>
               </div>
            </motion.div>
 
