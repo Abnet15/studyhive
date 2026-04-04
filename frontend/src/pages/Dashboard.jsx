@@ -153,7 +153,7 @@ const Dashboard = () => {
                 {badgesLoading ? (
                   <div className="h-32 rounded-3xl bg-slate-100 dark:bg-slate-800 animate-pulse"></div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-4">
                     {badges.slice(0, 4).map(badge => (
                       <Badge
                         key={badge.id}

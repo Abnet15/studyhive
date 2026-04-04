@@ -232,35 +232,35 @@ const HoneyInterviewer = () => {
   
   if (step === 'select_mode' || step === 'setup') {
     return (
-      <div className="min-h-screen bg-[#020617] text-white flex flex-col -mt-14 sm:-mt-16 pt-14 sm:pt-16 py-10 px-4 md:px-8 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-white flex flex-col -mt-14 sm:-mt-16 pt-14 sm:pt-16 py-10 px-4 md:px-8 relative overflow-hidden">
         <Particles />
         <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
         
         <div className="w-full max-w-3xl mx-auto flex-1 flex flex-col pt-10 relative z-10">
           <motion.div initial={{opacity: 0, y: 20}} animate={{opacity: 1, y: 0}} className="text-center mb-10">
             <h1 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-fuchsia-400 mb-4">Honey Interviewer</h1>
-            <p className="text-slate-400 text-lg">Your voice-driven AI recruiter and conversation partner. Pick your path.</p>
+            <p className="text-slate-400 dark:text-slate-400 text-lg">Your voice-driven AI recruiter and conversation partner. Pick your path.</p>
           </motion.div>
 
           {step === 'select_mode' && (
             <motion.div initial={{opacity: 0, y: 20}} animate={{opacity: 1, y: 0}} className="grid md:grid-cols-2 gap-5 mb-8">
               <button onClick={() => { setMode('interview'); setStep('setup'); }} className="p-8 rounded-3xl border-2 border-indigo-500/30 text-left transition-all bg-indigo-900/10 hover:bg-indigo-900/40 hover:border-indigo-500 shadow-xl group">
                 <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><Briefcase className="w-8 h-8" /></div>
-                <h3 className="text-2xl font-bold mb-3 text-white">Job Interview Prep</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">Simulate a real technical or behavioral job interview. Upload a job posting, select a language, and answer questions posed by our AI Hiring Manager.</p>
+                <h3 className="text-2xl font-bold mb-3 text-slate-900 dark:text-white">Job Interview Prep</h3>
+                <p className="text-sm text-slate-400 dark:text-slate-400 leading-relaxed">Simulate a real technical or behavioral job interview. Upload a job posting, select a language, and answer questions posed by our AI Hiring Manager.</p>
               </button>
               
               <button onClick={() => { setMode('english'); setStep('setup'); }} className="p-8 rounded-3xl border-2 border-fuchsia-500/30 text-left transition-all bg-fuchsia-900/10 hover:bg-fuchsia-900/40 hover:border-fuchsia-500 shadow-xl group">
                 <div className="w-16 h-16 rounded-2xl bg-fuchsia-500/20 text-fuchsia-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><MessageCircle className="w-8 h-8" /></div>
-                <h3 className="text-2xl font-bold mb-3 text-white">English Practice</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">Improve your casual or professional English conversation skills. The AI acts as a native partner and gently provides feedback on your grammar in real-time.</p>
+                <h3 className="text-2xl font-bold mb-3 text-slate-900 dark:text-white">English Practice</h3>
+                <p className="text-sm text-slate-400 dark:text-slate-400 leading-relaxed">Improve your casual or professional English conversation skills. The AI acts as a native partner and gently provides feedback on your grammar in real-time.</p>
               </button>
             </motion.div>
           )}
 
           {step === 'setup' && (
-            <motion.div initial={{opacity: 0, x: 20}} animate={{opacity: 1, x: 0}} className="bg-slate-900/60 border border-white/10 rounded-3xl p-6 md:p-8 mb-8 backdrop-blur-xl relative">
-              <button onClick={() => setStep('select_mode')} className="absolute -top-12 left-0 flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-white transition-colors">
+            <motion.div initial={{opacity: 0, x: 20}} animate={{opacity: 1, x: 0}} className="bg-slate-50 dark:bg-slate-900/60 border border-slate-900/20 dark:border-white/10 rounded-3xl p-6 md:p-8 mb-8 backdrop-blur-xl relative">
+              <button onClick={() => setStep('select_mode')} className="absolute -top-12 left-0 flex items-center gap-2 text-sm font-bold text-slate-400 dark:text-slate-400 hover:text-slate-900 dark:text-white transition-colors">
                  <span className="text-lg">←</span> Back to Modes
               </button>
 
@@ -271,11 +271,11 @@ const HoneyInterviewer = () => {
               
               {mode === 'interview' && (
                 <div className="mb-6">
-                  <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wide">Interview Language</label>
+                  <label className="block text-xs font-bold text-slate-400 dark:text-slate-400 mb-2 uppercase tracking-wide">Interview Language</label>
                   <select 
                     value={language} 
                     onChange={(e) => setLanguage(e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                    className="w-full bg-white/40 dark:bg-black/40 border border-slate-900/20 dark:border-white/10 rounded-xl p-4 text-sm text-slate-900 dark:text-white focus:border-indigo-500 focus:outline-none"
                   >
                     <option value="English">English</option>
                     <option value="Amharic">Amharic</option>
@@ -291,20 +291,20 @@ const HoneyInterviewer = () => {
                 </div>
               )}
 
-              <p className="text-xs text-slate-400 mb-2 mt-4 font-bold uppercase tracking-wide">
+              <p className="text-xs text-slate-400 dark:text-slate-400 mb-2 mt-4 font-bold uppercase tracking-wide">
                 {mode === 'interview' ? 'Job Description' : 'What do you want to talk about?'}
               </p>
               <textarea
                 value={contextText} onChange={e => setContextText(e.target.value)}
                 placeholder={mode === 'interview' ? "Paste the Job Description here..." : "e.g., 'I want to practice ordering food at a restaurant'"}
-                className="w-full h-32 bg-black/40 border border-white/10 rounded-2xl p-4 text-sm text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 mb-4 resize-none"
+                className="w-full h-32 bg-white/40 dark:bg-black/40 border border-slate-900/20 dark:border-white/10 rounded-2xl p-4 text-sm text-slate-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 mb-4 resize-none"
               />
               
               {mode === 'interview' && (
-                <label className="flex items-center justify-center gap-2 w-full py-4 rounded-xl border border-dashed border-white/20 bg-white/5 hover:bg-white/10 cursor-pointer transition-colors group mb-4">
+                <label className="flex items-center justify-center gap-2 w-full py-4 rounded-xl border border-dashed border-slate-900/30 dark:border-white/20 bg-slate-900/5 dark:bg-white/5 hover:bg-slate-900/10 dark:bg-white/10 cursor-pointer transition-colors group mb-4">
                   <input type="file" className="hidden" accept=".pdf,.doc,.docx,.txt" onChange={e => setSelectedFile(e.target.files?.[0])} />
-                  <Upload className="w-5 h-5 text-slate-400 group-hover:text-indigo-400 transition-colors" />
-                  <span className="text-sm font-medium text-slate-300 group-hover:text-white">{selectedFile ? selectedFile.name : 'Or upload Job Spec (PDF, DOCX)'}</span>
+                  <Upload className="w-5 h-5 text-slate-400 dark:text-slate-400 group-hover:text-indigo-400 transition-colors" />
+                  <span className="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:text-white">{selectedFile ? selectedFile.name : 'Or upload Job Spec (PDF, DOCX)'}</span>
                 </label>
               )}
 
@@ -323,11 +323,11 @@ const HoneyInterviewer = () => {
 
   // Active Call Screen
   return (
-    <div className="min-h-screen bg-[#020617] text-white flex flex-col -mt-14 sm:-mt-16 pt-14 sm:pt-16 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-white flex flex-col -mt-14 sm:-mt-16 pt-14 sm:pt-16 relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.15),transparent_70%)] pointer-events-none" />
       
       {/* Header */}
-      <header className="px-6 py-4 flex items-center justify-between border-b border-white/5 z-20">
+      <header className="px-6 py-4 flex items-center justify-between border-b border-slate-900/10 dark:border-white/5 z-20">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center font-black">AI</div>
           <div>
@@ -354,21 +354,21 @@ const HoneyInterviewer = () => {
             )}
           </AnimatePresence>
           
-          <motion.div animate={isListening ? { scale: 1.05 } : isSpeaking ? { scale: [1, 1.1, 1] } : { scale: 1 }} transition={isSpeaking ? { duration: 0.5, repeat: Infinity, repeatType: 'reverse' } : {}} className={`w-36 h-36 md:w-48 md:h-48 rounded-full border-4 flex items-center justify-center flex-col z-10 relative bg-slate-900 shadow-2xl ${isSpeaking ? 'border-indigo-500 shadow-indigo-500/50' : isListening ? 'border-emerald-500 shadow-emerald-500/50' : 'border-white/10'}`}>
+          <motion.div animate={isListening ? { scale: 1.05 } : isSpeaking ? { scale: [1, 1.1, 1] } : { scale: 1 }} transition={isSpeaking ? { duration: 0.5, repeat: Infinity, repeatType: 'reverse' } : {}} className={`w-36 h-36 md:w-48 md:h-48 rounded-full border-4 flex items-center justify-center flex-col z-10 relative bg-slate-50 dark:bg-slate-900 shadow-2xl ${isSpeaking ? 'border-indigo-500 shadow-indigo-500/50' : isListening ? 'border-emerald-500 shadow-emerald-500/50' : 'border-slate-900/20 dark:border-white/10'}`}>
             <span className="text-5xl md:text-7xl mb-2">{isSpeaking ? '💬' : isListening ? '👂' : '😴'}</span>
-            <span className="text-[10px] uppercase font-black tracking-widest text-slate-400">{isSpeaking ? 'AI Speaking' : isListening ? 'Listening...' : 'Paused'}</span>
+            <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 dark:text-slate-400">{isSpeaking ? 'AI Speaking' : isListening ? 'Listening...' : 'Paused'}</span>
           </motion.div>
         </div>
 
         {/* Live Subtitles / History */}
-        <div className="w-full max-w-2xl h-48 md:h-64 rounded-3xl bg-black/40 border border-white/5 backdrop-blur-xl p-5 overflow-y-auto mb-10 flex flex-col gap-4 font-medium" ref={scrollRef}>
+        <div className="w-full max-w-2xl h-48 md:h-64 rounded-3xl bg-white/40 dark:bg-black/40 border border-slate-900/10 dark:border-white/5 backdrop-blur-xl p-5 overflow-y-auto mb-10 flex flex-col gap-4 font-medium" ref={scrollRef}>
           {chatHistory.length === 0 && !isSpeaking && !isListening && (
-            <div className="text-center text-slate-500 my-auto text-sm">Waiting for the AI to connect...</div>
+            <div className="text-center text-slate-400 dark:text-slate-500 my-auto text-sm">Waiting for the AI to connect...</div>
           )}
           {chatHistory.map((msg, i) => (
             <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-              <div className="text-[10px] text-slate-500 font-black tracking-wider uppercase mb-1">{msg.role === 'user' ? 'You' : 'AI'}</div>
-              <div className={`px-4 py-2.5 rounded-2xl max-w-[85%] text-sm leading-relaxed ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none border border-white/5'}`}>{msg.text}</div>
+              <div className="text-[10px] text-slate-400 dark:text-slate-500 font-black tracking-wider uppercase mb-1">{msg.role === 'user' ? 'You' : 'AI'}</div>
+              <div className={`px-4 py-2.5 rounded-2xl max-w-[85%] text-sm leading-relaxed ${msg.role === 'user' ? 'bg-indigo-600 text-slate-900 dark:text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-900/10 dark:border-white/5'}`}>{msg.text}</div>
             </div>
           ))}
           {liveTranscript && (
@@ -381,11 +381,11 @@ const HoneyInterviewer = () => {
 
         {/* Controls */}
         <div className="flex items-center gap-6">
-          <button onClick={isListening ? stopListening : startListening} className={`w-20 h-20 rounded-full flex items-center justify-center border-4 transition-all ${isListening ? 'bg-red-500/20 border-red-500 text-red-500' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}`}>
+          <button onClick={isListening ? stopListening : startListening} className={`w-20 h-20 rounded-full flex items-center justify-center border-4 transition-all ${isListening ? 'bg-red-500/20 border-red-500 text-red-500' : 'bg-slate-900/10 dark:bg-white/10 border-slate-900/30 dark:border-white/20 text-slate-900 dark:text-white hover:bg-slate-900/20 dark:bg-white/20'}`}>
             {isListening ? <Square className="w-8 h-8 flex-shrink-0 fill-current" /> : <Mic className="w-8 h-8" />}
           </button>
         </div>
-        <p className="text-slate-500 text-xs mt-6 text-center max-w-sm font-medium">
+        <p className="text-slate-400 dark:text-slate-500 text-xs mt-6 text-center max-w-sm font-medium">
           {isListening ? "Speak clearly into your microphone. Say what you want, then pause." : "Microphone is off. Click to talk when you're ready to answer."}
         </p>
 
