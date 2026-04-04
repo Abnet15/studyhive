@@ -31,7 +31,7 @@ jobs:
         cache-dependency-path: backend/package-lock.json
         
     - name: Install dependencies (Backend)
-      run: cd backend && npm ci
+      run: cd backend && npm ci --legacy-peer-deps
       
     - name: Lint (Backend)
       run: cd backend && npm run lint --if-present
