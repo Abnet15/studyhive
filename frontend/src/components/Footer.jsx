@@ -71,6 +71,8 @@ const Footer = () => {
           <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
             Built with <Heart className="w-4 h-4 text-red-500 fill-red-500" /> by 
             <span className="font-bold text-slate-900 dark:text-white">Bekalu Temesgen</span>
+            <span>&</span>
+            <span className="font-bold text-slate-900 dark:text-white">Abnet Sisay</span>
           </div>
         </div>
       </div>
