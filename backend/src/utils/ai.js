@@ -120,11 +120,21 @@ const generateSmartSummary = async (filePath, title, originalName = '') => {
   // Let the AI just generate a generic response.
   if (!truncatedText || truncatedText.trim().length === 0) {
     console.warn('[Honey AI] File content empty. Bypassing AI block for demo purposes.');
+    
+    let summaryMessage = 'This file was successfully uploaded! However, no readable text could be extracted. It may be a scanned image or heavily formatted.';
+    const lowerName = originalName.toLowerCase();
+    
+    if (lowerName.endsWith('.zip') || lowerName.endsWith('.rar') || lowerName.endsWith('.tar') || lowerName.endsWith('.gz')) {
+      summaryMessage = 'Archive/ZIP file successfully uploaded! AI text extraction is automatically disabled for compressed folders, but your file is safe and ready for download.';
+    } else if (lowerName.endsWith('.jpg') || lowerName.endsWith('.png') || lowerName.endsWith('.jpeg')) {
+      summaryMessage = 'Image file successfully uploaded! AI text extraction is skipped for raw images without OCR processing.';
+    }
+
     return {
-      aiSummary: 'This file appears to be empty or contains no readable text.',
-      aiKeyTerms: [],
-      aiTopics: [],
-      aiContentValid: true, // We allow it through the gate to prevent crashing tests
+      aiSummary: summaryMessage,
+      aiKeyTerms: ['Uploaded', 'No Text Extracted'],
+      aiTopics: ['Uncategorized'],
+      aiContentValid: true, // Allow it through the gate
       aiQuiz: []
     };
   }

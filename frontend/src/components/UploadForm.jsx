@@ -277,6 +277,7 @@ const UploadForm = () => {
                   name="file"
                   type="file"
                   className="hidden"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar,.tar,.gz,.jpg,.jpeg,.png"
                   onChange={handleChange}
                 />
                 <div className="space-y-4">
