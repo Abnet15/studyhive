@@ -306,7 +306,6 @@ const MasterclassPlayer = () => {
   };
 
   useEffect(() => {
-    if (!professor && id) { handleProfessorSelect({ id: 'super_teacher', name: 'Super Teacher', emoji: '🦸‍♂️', tag: 'Master of Everything', desc: 'Teaches everything perfectly using real-world examples.' }); }
     return () => { synthRef.current?.cancel(); clearInterval(progressRef.current); };
   }, [id]);
 
@@ -341,8 +340,12 @@ const MasterclassPlayer = () => {
       <p className="text-slate-500 dark:text-slate-400 max-w-sm font-bold text-lg">Synthesizing document into immersive scenes...</p>
     </div>
   );
+  // If no professor selected yet, show the selection screen
+  if (!professor && !loading) {
+    return <TeacherSelector onSelect={handleProfessorSelect} />;
+  }
 
-  if (error || !data?.scenes?.length) return (
+  if (error || (!loading && !data?.scenes?.length)) return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#020617] flex items-center justify-center text-slate-900 dark:text-white transition-colors">
        <div className="text-center space-y-6 max-w-md p-10 bg-white dark:bg-white/5 rounded-[3rem] border border-slate-200 dark:border-white/10 shadow-2xl">
           <div className="text-7xl">🧪</div><h2 className="text-3xl font-black">Synthesis Failed</h2><p className="text-slate-500 dark:text-slate-400 font-medium">{error || 'AI could not structure this masterclass.'}</p>
