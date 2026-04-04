@@ -23,6 +23,7 @@ const HoneyInterviewer = () => {
   const [mode, setMode] = useState('interview'); // 'interview' | 'english'
   const [contextText, setContextText] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
+  const [language, setLanguage] = useState('English');
   
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -116,8 +117,12 @@ const HoneyInterviewer = () => {
     const formData = new FormData();
     formData.append('mode', mode);
     formData.append('history', JSON.stringify(history));
-    if (contextText) formData.append('context', contextText);
-    if (selectedFile) formData.append('file', selectedFile);
+    
+    let finalContext = contextText;
+    if (mode === 'interview') finalContext += `\n\nLANGUAGE REQUEST: Please conduct this interview and speak exactly in ${language}.`;
+    
+    if (finalContext) formData.append('context', finalContext);
+    if (selectedFile && mode === 'interview') formData.append('file', selectedFile);
 
     try {
       const res = await fetch(`${API_BASE}/ai/voice-chat`, {
@@ -194,6 +199,7 @@ const HoneyInterviewer = () => {
     setChatHistory([]);
     setSelectedFile(null);
     setContextText('');
+    setLanguage('English');
   };
 
 
@@ -227,20 +233,44 @@ const HoneyInterviewer = () => {
           </div>
 
           <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-6 md:p-8 mb-8 backdrop-blur-xl">
-            <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-indigo-400" /> Provide Context</h3>
-            <p className="text-xs text-slate-400 mb-4">{mode === 'interview' ? 'Paste the Job Description or upload the posting as a PDF/Docx.' : 'What do you want to talk about? (e.g., "I want to practice ordering food at a restaurant" or "Just chat about movies").'}</p>
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-indigo-400" /> 
+              {mode === 'interview' ? 'Interview Details' : 'Conversation Topic'}
+            </h3>
             
+            {mode === 'interview' && (
+              <div className="mb-4">
+                <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wide">Interview Language</label>
+                <select 
+                  value={language} 
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                >
+                  <option value="English">English</option>
+                  <option value="Amharic">Amharic</option>
+                  <option value="French">French</option>
+                  <option value="Spanish">Spanish</option>
+                  <option value="German">German</option>
+                </select>
+              </div>
+            )}
+
+            <p className="text-xs text-slate-400 mb-2 mt-4 font-bold uppercase tracking-wide">
+              {mode === 'interview' ? 'Job Description' : 'What do you want to talk about?'}
+            </p>
             <textarea
               value={contextText} onChange={e => setContextText(e.target.value)}
-              placeholder="Type or paste context here..."
+              placeholder={mode === 'interview' ? "Paste the Job Description here..." : "e.g., 'I want to practice ordering food at a restaurant'"}
               className="w-full h-32 bg-black/40 border border-white/10 rounded-2xl p-4 text-sm text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 mb-4 resize-none"
             />
             
-            <label className="flex items-center justify-center gap-2 w-full py-4 rounded-xl border border-dashed border-white/20 bg-white/5 hover:bg-white/10 cursor-pointer transition-colors group">
-              <input type="file" className="hidden" accept=".pdf,.doc,.docx,.txt" onChange={e => setSelectedFile(e.target.files?.[0])} />
-              <Upload className="w-5 h-5 text-slate-400 group-hover:text-indigo-400 transition-colors" />
-              <span className="text-sm font-medium text-slate-300 group-hover:text-white">{selectedFile ? selectedFile.name : 'Or upload a document (PDF, DOCX)'}</span>
-            </label>
+            {mode === 'interview' && (
+              <label className="flex items-center justify-center gap-2 w-full py-4 rounded-xl border border-dashed border-white/20 bg-white/5 hover:bg-white/10 cursor-pointer transition-colors group">
+                <input type="file" className="hidden" accept=".pdf,.doc,.docx,.txt" onChange={e => setSelectedFile(e.target.files?.[0])} />
+                <Upload className="w-5 h-5 text-slate-400 group-hover:text-indigo-400 transition-colors" />
+                <span className="text-sm font-medium text-slate-300 group-hover:text-white">{selectedFile ? selectedFile.name : 'Or upload Job Spec (PDF, DOCX)'}</span>
+              </label>
+            )}
           </div>
 
           {error && <div className="text-red-400 mb-4 text-center font-medium bg-red-500/10 py-3 rounded-xl border border-red-500/20">{error}</div>}

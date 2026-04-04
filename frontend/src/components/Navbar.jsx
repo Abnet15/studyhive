@@ -120,6 +120,7 @@ const Navbar = () => {
                        <Link 
                          key={link.path} 
                          to={link.path}
+                         onClick={() => setAiMenuOpen(false)}
                          className="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-all group"
                        >
                          <div className="shrink-0 p-2 rounded-lg bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-white/5 group-hover:scale-110 transition-transform">
