@@ -56,9 +56,7 @@ async function extractTextFromFile(fileUrl, originalName = '') {
       const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
       dataBuffer = Buffer.from(response.data);
     } else {
-      // Local file in the uploads directory
       let localPath = fileUrl;
-      // If multer gave us a relative path, resolve it relative to backend root
       if (!path.isAbsolute(fileUrl)) {
          localPath = path.resolve(__dirname, '../../', fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl);
       }
@@ -73,23 +71,44 @@ async function extractTextFromFile(fileUrl, originalName = '') {
     const lowerCaseUrl = fileUrl.toLowerCase();
     const lowerCaseName = originalName.toLowerCase();
     
+    // Archives bypass — they genuinely have no readable text
+    if (lowerCaseName.endsWith('.zip') || lowerCaseName.endsWith('.rar') || lowerCaseName.endsWith('.tar') || lowerCaseName.endsWith('.gz')) {
+      return "[ARCHIVE_FILE]";
+    }
+
+    let extractedText = "";
+
     if (lowerCaseUrl.includes('.pdf') || lowerCaseName.includes('.pdf')) {
       const data = await pdfParse(dataBuffer);
-      return data.text;
+      extractedText = data.text;
     } else if (lowerCaseUrl.includes('.docx') || lowerCaseName.includes('.docx') || lowerCaseUrl.includes('.doc') || lowerCaseName.includes('.doc')) {
       try {
          const result = await mammoth.extractRawText({ buffer: dataBuffer });
-         return result.value;
+         extractedText = result.value;
       } catch (err) {
-         // Fallback to officeparser if mammoth fails
-         return await parseOffice(dataBuffer);
+         extractedText = await parseOffice(dataBuffer);
       }
     } else if (lowerCaseUrl.includes('.pptx') || lowerCaseName.includes('.pptx') || lowerCaseUrl.includes('.ppt') || lowerCaseName.includes('.ppt')) {
-      // Use officeparser strictly for PowerPoint files
-      return await parseOffice(dataBuffer);
+      extractedText = await parseOffice(dataBuffer);
     } else {
-      return dataBuffer.toString('utf8');
+      extractedText = dataBuffer.toString('utf8');
     }
+
+    // ── VISION OCR FALLBACK ─────────────────────────────────────────────────────
+    if (!extractedText || extractedText.trim().length === 0) {
+      console.warn('[Honey AI] Standard text extraction returned empty. Attempting Vision OCR fallback...');
+      try {
+        const visionText = await extractWithGeminiVision(fileUrl, originalName);
+        if (visionText && visionText.trim().length > 20) {
+          console.log('[Honey AI] ✅ Vision OCR succeeded! Extracted', visionText.length, 'chars.');
+          return visionText;
+        }
+      } catch (visionErr) {
+        console.warn('[Honey AI] Vision OCR fallback failed:', visionErr.message);
+      }
+    }
+
+    return extractedText || "";
   } catch (err) {
     console.error('[Honey AI] Failed to extract text from file:', err.message);
     return "";
@@ -113,39 +132,20 @@ const generateSmartSummary = async (filePath, title, originalName = '') => {
   }
 
   const fileText = await extractTextFromFile(filePath, originalName);
+  
+  if (fileText === "[ARCHIVE_FILE]") {
+    return {
+      aiSummary: 'Archive/ZIP file successfully uploaded! AI text extraction is automatically disabled for compressed folders, but your file is safe and ready for download.',
+      aiKeyTerms: ['Archive', 'Compressed Format'],
+      aiTopics: ['Uncategorized'],
+      aiContentValid: true,
+      aiQuiz: []
+    };
+  }
+
   const truncatedText = fileText.substring(0, 100000);
   
-  // ── VISION OCR FALLBACK ─────────────────────────────────────────────────────
-  // If standard text extraction returned nothing, attempt Gemini Vision to read
-  // scanned PDFs, images, and heavily-formatted documents before giving up.
   if (!truncatedText || truncatedText.trim().length === 0) {
-    console.warn('[Honey AI] Standard text extraction returned empty. Attempting Vision OCR fallback...');
-    
-    const lowerName = originalName.toLowerCase();
-    
-    // Archives bypass — they genuinely have no readable text
-    if (lowerName.endsWith('.zip') || lowerName.endsWith('.rar') || lowerName.endsWith('.tar') || lowerName.endsWith('.gz')) {
-      return {
-        aiSummary: 'Archive/ZIP file successfully uploaded! AI text extraction is automatically disabled for compressed folders, but your file is safe and ready for download.',
-        aiKeyTerms: ['Archive', 'Compressed Format'],
-        aiTopics: ['Uncategorized'],
-        aiContentValid: true,
-        aiQuiz: []
-      };
-    }
-
-    // Attempt Gemini Vision OCR for images and scanned docs
-    try {
-      const visionText = await extractWithGeminiVision(filePath, originalName);
-      if (visionText && visionText.trim().length > 20) {
-        console.log('[Honey AI] ✅ Vision OCR succeeded! Extracted', visionText.length, 'chars.');
-        // Re-run the full AI pipeline with the vision-extracted text
-        return await runAIPipeline(visionText, title);
-      }
-    } catch (visionErr) {
-      console.warn('[Honey AI] Vision OCR fallback failed:', visionErr.message);
-    }
-
     // If even Vision OCR couldn't read it, THEN reject
     return {
       aiSummary: 'This file contains no readable content even after AI Vision analysis. Please upload a file with actual text or image content.',
