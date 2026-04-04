@@ -18,6 +18,10 @@ const SUGGESTED_TOPICS = [
   'How computers think', 'Python for beginners', 'Machine Learning basics',
   'How the internet works', 'React.js fundamentals', 'What is blockchain',
   'Neural networks explained', 'SQL database design', 'Big O Notation',
+  'Intro to Quantum Computing', 'Cloud Computing basics', 'Cybersecurity fundamentals',
+  'Docker & Containers', 'Object-Oriented Programming', 'APIs explained in 5 mins',
+  'Data Structures explained', 'Deep Learning vs ML', 'Basics of Cryptography',
+  'How Operating Systems work', 'Intro to Agile methodology', 'UI/UX Design Principles'
 ];
 
 // ─── Waveform ─────────────────────────────────────────────────────────────────
@@ -249,12 +253,17 @@ const HoneyTeacher = () => {
                 className="w-full pl-14 pr-6 py-5 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-slate-600 text-lg focus:outline-none focus:border-indigo-500/50 focus:bg-white/8 transition-all"
               />
             </div>
-            {/* Suggested topics */}
+            {/* Suggested topics - Filtered dynamically */}
             <div className="flex flex-wrap gap-2">
-              {SUGGESTED_TOPICS.map(t => (
+              {SUGGESTED_TOPICS.filter(t => t.toLowerCase().includes(topic.toLowerCase())).map(t => (
                 <button key={t} onClick={() => { setTopic(t); setStep('select-prof'); }}
                   className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/8 text-slate-400 text-xs font-medium hover:bg-white/10 hover:text-white hover:border-indigo-500/30 transition-all">{t}</button>
               ))}
+              {topic.trim() && SUGGESTED_TOPICS.filter(t => t.toLowerCase().includes(topic.toLowerCase())).length === 0 && (
+                <div className="text-emerald-400 text-xs font-bold px-2 py-1 flex items-center gap-2">
+                  <Sparkles className="w-3 h-3" /> Unique topic detected! Press Enter to discover it.
+                </div>
+              )}
             </div>
           </div>
 
