@@ -207,6 +207,8 @@ const MasterclassPlayer = () => {
 
   const synthRef = useRef(window.speechSynthesis);
   const progressRef = useRef(null);
+  const timeoutRef = useRef(null);
+  const isCancelledRef = useRef(false);
 
   const handleProfessorSelect = async (prof) => {
     setProfessor(prof); setLoading(true); setError('');
@@ -229,7 +231,7 @@ const MasterclassPlayer = () => {
          duration: 15 
        }); 
     }
-    return () => { synthRef.current?.cancel(); clearInterval(progressRef.current); };
+    return () => { synthRef.current?.cancel(); clearInterval(progressRef.current); clearTimeout(timeoutRef.current); };
   }, [id, loading, professor]);
 
   const speakText = useCallback((text, onDone) => {
@@ -242,19 +244,45 @@ const MasterclassPlayer = () => {
 
   const playScene = useCallback((index) => {
     if (!data?.scenes || index >= data.scenes.length) { setIsPlaying(false); return; }
+    isCancelledRef.current = false;
     const scene = data.scenes[index]; setCurrentSlide(index); setSelectedChoice(null); setWaitingForAnswer(false); setProgress(0);
-    clearInterval(progressRef.current); setProfessorMood('speaking'); let elapsed = 0; const est = (scene.teacherScript?.length || 100) * 80;
+    clearInterval(progressRef.current); clearTimeout(timeoutRef.current); setProfessorMood('speaking'); let elapsed = 0; const est = (scene.teacherScript?.length || 100) * 80;
     progressRef.current = setInterval(() => { elapsed += 100; setProgress(Math.min((elapsed / est) * 100, 98)); }, 100);
-    speakText(scene.teacherScript, () => { clearInterval(progressRef.current); setProgress(100); if (scene.type === 'interactive') { setProfessorMood('thinking'); setWaitingForAnswer(true); setIsPlaying(false); } else { setProfessorMood('neutral'); setTimeout(() => { if (index + 1 < data.scenes.length) playScene(index + 1); }, 1200); } });
+    speakText(scene.teacherScript, () => { 
+        clearInterval(progressRef.current); 
+        setProgress(100); 
+        if (isCancelledRef.current) return; // Prevent auto-advance if user pressed stop
+
+        if (scene.type === 'interactive') { 
+            setProfessorMood('thinking'); setWaitingForAnswer(true); setIsPlaying(false); 
+        } else { 
+            setProfessorMood('neutral'); 
+            timeoutRef.current = setTimeout(() => { if (index + 1 < data.scenes.length) playScene(index + 1); }, 1200); 
+        } 
+    });
   }, [data, speakText]);
 
   const handleAnswer = useCallback((choice) => {
     setSelectedChoice(choice); setWaitingForAnswer(false); setProfessorMood(choice.isCorrect ? 'correct' : 'wrong');
-    speakText(choice.teacherResponse, () => { setProfessorMood('neutral'); setTimeout(() => { if (currentSlide + 1 < (data?.scenes?.length || 0)) playScene(currentSlide + 1); }, 1500); });
+    speakText(choice.teacherResponse, () => { 
+        setProfessorMood('neutral'); 
+        if (isCancelledRef.current) return;
+        timeoutRef.current = setTimeout(() => { if (currentSlide + 1 < (data?.scenes?.length || 0)) playScene(currentSlide + 1); }, 1500); 
+    });
   }, [currentSlide, data, speakText, playScene]);
 
-  const stopAll = () => { synthRef.current?.cancel(); clearInterval(progressRef.current); setIsPlaying(false); setProgress(0); setWaitingForAnswer(false); };
-  const restart = () => { stopAll(); setCurrentSlide(0); setSelectedChoice(null); setProfessorMood('neutral'); setTimeout(() => playScene(0), 100); };
+  const stopAll = useCallback(() => { 
+      isCancelledRef.current = true; 
+      synthRef.current?.cancel(); 
+      clearInterval(progressRef.current); 
+      clearTimeout(timeoutRef.current); 
+      setIsPlaying(false); 
+      setProgress(0); 
+      setWaitingForAnswer(false); 
+      setProfessorMood('neutral');
+  }, []);
+
+  const restart = () => { stopAll(); setCurrentSlide(0); setSelectedChoice(null); setProfessorMood('neutral'); timeoutRef.current = setTimeout(() => playScene(0), 100); };
 
   if (loading) return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#020617] flex flex-col items-center justify-center text-slate-900 dark:text-white gap-8 text-center p-6 transition-colors">
@@ -309,7 +337,7 @@ const MasterclassPlayer = () => {
            <div className="p-10 rounded-[3rem] bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex flex-col items-center text-center gap-8 shadow-xl">
               <ProfessorAvatar isPlaying={isPlaying} mood={professorMood} professor={professor} />
               {!waitingForAnswer ? (
-                <button onClick={() => isPlaying ? synthRef.current.cancel() : playScene(currentSlide)} className="w-24 h-24 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:scale-105 active:scale-95 transition-all text-white">{isPlaying ? <Pause className="w-10 h-10" /> : <Play className="w-10 h-10 ml-1.5" />}</button>
+                <button onClick={() => isPlaying ? stopAll() : playScene(currentSlide)} className="w-24 h-24 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-[0_20px_50px_rgba(99,102,241,0.4)] hover:scale-105 active:scale-95 transition-all text-white">{isPlaying ? <Pause className="w-10 h-10" /> : <Play className="w-10 h-10 ml-1.5" />}</button>
               ) : (
                 <div className="py-5 px-8 rounded-2xl bg-amber-500/10 border border-amber-300 dark:border-amber-500/20 text-amber-600 dark:text-amber-500 text-xs font-black animate-pulse uppercase tracking-[0.3em]">Awaiting Input</div>
               )}
