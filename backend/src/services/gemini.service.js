@@ -191,6 +191,41 @@ class GeminiService {
     }
   }
 
+  async generateExitExamDiagnostic(department) {
+    const prompt = `Act as an official Exit Exam orchestrator for the "${department}" department. 
+    I need a comprehensive diagnostic mock exam blueprint. 
+    Identify the 4-6 largest core competencies/courses students must master in this department for graduation.
+    For each competency, generate exactly 3 highly technical, standardized multiple-choice questions.
+
+    Return the output strictly in this JSON format (no markdown formatting, no code blocks, just raw JSON):
+    {
+      "department": "${department}",
+      "competencies": [
+        {
+          "name": "Name of the competency/course",
+          "weight": 25,
+          "questions": [
+            {
+              "questionText": "Technical problem or definition?",
+              "options": ["A", "B", "C", "D"],
+              "correctAnswer": "A",
+              "explanation": "Why this is correct."
+            }
+          ]
+        }
+      ]
+    }`;
+
+    try {
+      const text = await this.runWithFallback(prompt);
+      const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      return JSON.parse(cleaned);
+    } catch (err) {
+      console.error('[GeminiService] Generate Diagnostic Error:', err);
+      throw new Error('Could not generate the exit exam diagnostic.');
+    }
+  }
+
   async generateMasterclass(topic, fileContentSnippet = '', teacherPersona = null) {
     const textContext = fileContentSnippet ? `\nCRITICAL CONTEXT: Build this lesson ONLY around this text:\n"""\n${fileContentSnippet.substring(0, 40000)}\n"""\n` : '';
 

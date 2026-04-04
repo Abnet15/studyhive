@@ -136,3 +136,39 @@ exports.voiceChat = async (req, res, next) => {
     next(new ApiError(500, err.message));
   }
 };
+
+exports.getExitExamDiagnostic = async (req, res, next) => {
+  try {
+    const { department } = req.params;
+    if (!department) throw new ApiError(400, 'Department parameter is required');
+
+    const diagnostic = await geminiService.generateExitExamDiagnostic(department);
+    res.json(diagnostic);
+  } catch (err) {
+    next(new ApiError(500, err.message));
+  }
+};
+
+const ExamScore = require('../models/ExamScore.model');
+exports.submitExitExam = async (req, res, next) => {
+  try {
+    const { department, scores, totalScore, totalMaxScore } = req.body;
+    
+    if (!department || !scores) {
+      throw new ApiError(400, 'Missing required exam data');
+    }
+
+    const examRecord = new ExamScore({
+      user_id: req.user.id,
+      department,
+      scores,
+      totalScore,
+      totalMaxScore
+    });
+
+    await examRecord.save();
+    res.status(201).json({ message: 'Exam scores saved successfully!', record: examRecord });
+  } catch (err) {
+    next(new ApiError(500, err.message));
+  }
+};
