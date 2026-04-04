@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useMaterials } from '../context/MaterialContext';
-import { Sparkles, ArrowRight, BrainCircuit, Rocket, Target, Users, LayoutDashboard } from 'lucide-react';
+import { Sparkles, ArrowRight, BrainCircuit, Rocket, Target, Users, LayoutDashboard, Mic } from 'lucide-react';
 
 const Landing = () => {
   const { user } = useAuth();
@@ -129,14 +129,15 @@ const Landing = () => {
 
             <motion.div 
               initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer}
-              className="grid grid-cols-1 md:grid-cols-3 gap-8"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
             >
                {[
-                 { title: 'Smart Summaries', desc: 'Instantly get the core concepts of a 50-page document condensed into a 2-minute read.', icon: <BrainCircuit className="w-8 h-8 text-white"/>, color: 'from-blue-500 to-cyan-400' },
-                 { title: 'Auto Flashcards', desc: 'Honey AI automatically scans uploads and extracts the 5 most critical terms.', icon: <Sparkles className="w-8 h-8 text-white"/>, color: 'from-purple-500 to-pink-500' },
-                 { title: 'Exam Generator', desc: 'Test your knowledge on the fly with auto-generated multiple-choice quizzes.', icon: <Target className="w-8 h-8 text-white"/>, color: 'from-orange-500 to-amber-500' }
+                 { title: 'Interactive Masterclass', desc: 'Watch your files turn into animated, voice-guided interactive video lessons instantly.', icon: <Sparkles className="w-8 h-8 text-white"/>, color: 'from-blue-500 to-cyan-400' },
+                 { title: 'Voice Simulator', desc: 'Conduct realistic voice-to-voice mock interviews and English practice right in your browser.', icon: <Mic className="w-8 h-8 text-white"/>, color: 'from-indigo-500 to-purple-500' },
+                 { title: 'Auto Flashcards', desc: 'Honey AI automatically scans uploads and extracts the most critical terms for memorization.', icon: <BrainCircuit className="w-8 h-8 text-white"/>, color: 'from-purple-500 to-pink-500' },
+                 { title: 'Exam Generator', desc: 'Test your knowledge on the fly with auto-generated contextual multiple-choice quizzes.', icon: <Target className="w-8 h-8 text-white"/>, color: 'from-orange-500 to-amber-500' }
                ].map((item, idx) => (
-                 <motion.div key={idx} variants={fadeIn} className="glass-card p-10 group hover:-translate-y-3 transition-all duration-500 hover:shadow-2xl hover:shadow-primary-500/10">
+                 <motion.div key={idx} variants={fadeIn} className="glass-card p-8 group hover:-translate-y-3 transition-all duration-500 hover:shadow-2xl hover:shadow-primary-500/10">
                     <div className={`w-16 h-16 rounded-2xl bg-gradient-to-tr ${item.color} flex items-center justify-center mb-8 shadow-lg shadow-${item.color.split('-')[1]}/30 group-hover:scale-110 transition-transform`}>
                        {item.icon}
                     </div>
