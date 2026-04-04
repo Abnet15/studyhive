@@ -3,6 +3,7 @@ const {
   getRecommendations, 
   generateQuiz, 
   analyzeFile,
+  extractFileText,
   chat,
   generateMasterclass,
   voiceChat,
@@ -17,6 +18,7 @@ const router = express.Router();
 router.get('/recommendations', requireAuth, getRecommendations);
 router.post('/generate-quiz', requireAuth, generateQuiz);
 router.post('/analyze-file', requireAuth, upload.single('file'), analyzeFile);
+router.post('/extract-text', requireAuth, upload.single('file'), extractFileText);
 router.post('/chat', requireAuth, chat);
 router.post('/masterclass', requireAuth, generateMasterclass);
 router.post('/voice-chat', requireAuth, upload.single('file'), voiceChat);

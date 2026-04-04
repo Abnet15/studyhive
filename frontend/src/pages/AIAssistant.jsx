@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { apiClient } from '../services/apiClient';
 import aiService from '../services/aiService';
 import ConfettiAnimation from '../components/ConfettiAnimation';
 import { Sparkles, Brain, MessageSquare, FileText, Send, RefreshCcw, Trash2, CheckCircle2, XCircle } from 'lucide-react';
@@ -100,16 +102,26 @@ const AIAssistant = () => {
     }, 1200);
   };
 
+  const navigate = useNavigate();
+
   const handleFileAnalysis = async (e) => {
     e.preventDefault();
     if (!selectedFile) return;
     setLoadingAnalysis(true);
     setAnalysis('');
     try {
-      const data = await aiService.analyzeFile(selectedFile, token);
-      setAnalysis(data.analysis);
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      
+      const response = await apiClient.post('/ai/extract-text', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      // Successfully extracted text using Vision Pipeline. Navigate locally without DB hit!
+      navigate('/masterclass/adhoc', { state: { extractedText: response.extractedText, filename: response.filename } });
     } catch (err) {
-      alert('Error analyzing file. Please ensure it\'s a valid PDF or Word doc.');
+      // Handles the 400 NO_CONTENT_FOUND precisely
+      alert(err.message || 'Error analyzing file. Please ensure it has readable text or legible images.');
     } finally {
       setLoadingAnalysis(false);
     }
@@ -210,18 +222,18 @@ const AIAssistant = () => {
                  </div>
                  {!analysis && !loadingAnalysis ? (
                     <form onSubmit={handleFileAnalysis} className="flex-1 flex flex-col justify-center gap-6">
-                       <p className="text-sm text-slate-500 font-medium text-center">Upload material and I'll explain complex concepts.</p>
+                       <p className="text-sm text-slate-500 font-medium text-center">Upload material and I'll build a personalized interactive masterclass.</p>
                        <div className="relative group/input">
                           <input 
                             type="file" 
-                            accept=".pdf,.doc,.docx,.ppt,.pptx"
+                            accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.png,.jpeg"
                             onChange={(e) => setSelectedFile(e.target.files[0])}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                           />
                           <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-8 flex flex-col items-center gap-2 group-hover/input:border-primary-400 group-hover/input:bg-primary-500/5 transition-all">
                              <FileText className="w-10 h-10 text-slate-300 group-hover/input:text-primary-500 transition-colors" />
                              <span className="text-xs font-black text-slate-400 group-hover/input:text-primary-500 uppercase tracking-widest text-center truncate w-full">
-                                {selectedFile ? selectedFile.name : 'Drop PDF/DOCX/PPTX here'}
+                                {selectedFile ? selectedFile.name : 'Drop material here (PDF/Word/Images)'}
                              </span>
                           </div>
                        </div>
@@ -230,7 +242,7 @@ const AIAssistant = () => {
                          disabled={!selectedFile}
                          className="btn-primary py-4 shadow-xl disabled:opacity-50"
                        >
-                         Start Analysis
+                         Start Interactive Masterclass
                        </button>
                     </form>
                  ) : (

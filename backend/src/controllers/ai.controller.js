@@ -69,6 +69,23 @@ exports.analyzeFile = async (req, res, next) => {
   }
 };
 
+exports.extractFileText = async (req, res, next) => {
+  try {
+    if (!req.file) throw new ApiError(400, 'No file uploaded for extraction');
+    
+    const fileUrl = req.file.path;
+    const extractedText = await extractTextFromFile(fileUrl, req.file.originalname);
+    
+    if (!extractedText || extractedText.trim().length === 0) {
+       throw new ApiError(400, "Could not extract text from the file.");
+    }
+
+    res.json({ extractedText, filename: req.file.originalname });
+  } catch (err) {
+    next(new ApiError(500, err.message));
+  }
+};
+
 exports.chat = async (req, res, next) => {
   try {
     const { message, context } = req.body;
@@ -83,10 +100,10 @@ exports.chat = async (req, res, next) => {
 
 exports.generateMasterclass = async (req, res, next) => {
   try {
-    const { topic, materialId, teacherPersona, duration } = req.body;
+    const { topic, materialId, teacherPersona, duration, providedSnippet } = req.body;
     
     let resolvedTopic = topic;
-    let contentSnippet = '';
+    let contentSnippet = providedSnippet || '';
     let keyTerms = [];
 
     if (materialId && mongoose.Types.ObjectId.isValid(materialId)) {

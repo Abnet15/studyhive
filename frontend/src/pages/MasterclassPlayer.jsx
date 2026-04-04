@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
@@ -192,6 +192,7 @@ const InteractiveScene = ({ scene, onAnswer, selectedChoice }) => (
 const MasterclassPlayer = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { token } = useAuth();
 
   const [professor, setProfessor] = useState(null);
@@ -213,26 +214,22 @@ const MasterclassPlayer = () => {
   const handleProfessorSelect = async (prof) => {
     setProfessor(prof); setLoading(true); setError('');
     try {
-      const response = await apiClient.post('/ai/public-masterclass', { materialId: id, teacherPersona: { id: prof.id, name: prof.name, tag: prof.tag, desc: prof.desc }, duration: typeof prof.duration === 'number' ? prof.duration : 5 });
+      const isAdhoc = id === 'adhoc';
+      const response = await apiClient.post('/ai/public-masterclass', { 
+        materialId: isAdhoc ? undefined : id,
+        topic: isAdhoc ? location.state?.filename : undefined,
+        providedSnippet: isAdhoc ? location.state?.extractedText : undefined,
+        teacherPersona: { id: prof.id, name: prof.name, tag: prof.tag, desc: prof.desc }, 
+        duration: typeof prof.duration === 'number' ? prof.duration : 5 
+      });
       setData(response);
     } catch (err) { setError(err.message || 'Failed to initialize the AI Masterclass.'); }
     finally { setLoading(false); }
   };
 
   useEffect(() => {
-    // Auto-start the file masterclass with the best "Super Teacher" configuration and 15 minute depth
-    if (!professor && id && !loading) { 
-       handleProfessorSelect({ 
-         id: 'super_teacher', 
-         name: 'Super Teacher', 
-         emoji: '🦸‍♂️', 
-         tag: 'Master of Everything', 
-         desc: 'Teaches everything perfectly using deep, world-class analogies and concrete real-world examples.',
-         duration: 15 
-       }); 
-    }
     return () => { synthRef.current?.cancel(); clearInterval(progressRef.current); clearTimeout(timeoutRef.current); };
-  }, [id, loading, professor]);
+  }, []);
 
   const speakText = useCallback((text, onDone) => {
     if (!synthRef.current || !text) { onDone?.(); return; }
@@ -283,6 +280,40 @@ const MasterclassPlayer = () => {
   }, []);
 
   const restart = () => { stopAll(); setCurrentSlide(0); setSelectedChoice(null); setProfessorMood('neutral'); timeoutRef.current = setTimeout(() => playScene(0), 100); };
+
+  if (!professor) {
+    const isAdhoc = id === 'adhoc';
+    const topicDisplay = isAdhoc ? location.state?.filename : 'this material';
+    
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-[#020617] flex items-center justify-center p-6 text-slate-900 dark:text-white transition-colors">
+         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-xl w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-10 rounded-[3rem] shadow-2xl flex flex-col items-center text-center gap-8">
+            <div className="w-24 h-24 rounded-full bg-indigo-500/10 flex items-center justify-center text-5xl border-4 border-indigo-500/20 shadow-[0_0_50px_rgba(99,102,241,0.2)]">🦸‍♂️</div>
+            <div className="space-y-2">
+               <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Interactive Masterclass</h2>
+               <p className="text-sm font-medium text-slate-500 dark:text-slate-400 max-w-md mx-auto">Select how long you want to study <span className="font-bold text-indigo-500 truncate">{topicDisplay}</span> today.</p>
+            </div>
+            
+            <div className="grid grid-cols-1 w-full gap-4 mt-4">
+               {[
+                 { time: 5, label: "Quick Overview", desc: "Fast-paced core concepts." },
+                 { time: 10, label: "Standard Lesson", desc: "Balanced examples and quizzes." },
+                 { time: 15, label: "Deep Dive", desc: "Comprehensive, in-depth analogies." }
+               ].map(opt => (
+                 <button key={opt.time} onClick={() => handleProfessorSelect({ id: 'super_teacher', name: 'Super Teacher', emoji: '🦸‍♂️', tag: 'Master of Everything', desc: 'Teaches everything perfectly.', duration: opt.time })} className="flex flex-row items-center justify-between p-5 rounded-2xl bg-slate-50 hover:bg-indigo-50 dark:bg-slate-800/50 dark:hover:bg-indigo-500/10 border-2 border-transparent hover:border-indigo-500/30 transition-all text-left group">
+                    <div className="flex flex-col">
+                       <span className="font-black text-lg text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">{opt.time} Minutes</span>
+                       <span className="text-sm text-slate-500 font-medium">{opt.label} • {opt.desc}</span>
+                    </div>
+                    <ArrowRight className="w-6 h-6 text-slate-300 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
+                 </button>
+               ))}
+            </div>
+            <button onClick={() => navigate(-1)} className="w-full py-4 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white font-black text-sm uppercase tracking-widest transition-all">Cancel</button>
+         </motion.div>
+      </div>
+    );
+  }
 
   if (loading) return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#020617] flex flex-col items-center justify-center text-slate-900 dark:text-white gap-8 text-center p-6 transition-colors">
