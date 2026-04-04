@@ -106,3 +106,33 @@ exports.generateMasterclass = async (req, res, next) => {
     next(new ApiError(500, err.message));
   }
 };
+
+exports.voiceChat = async (req, res, next) => {
+  try {
+    const { mode, context, history } = req.body;
+    
+    if (!mode) throw new ApiError(400, 'Mode is required (interview or english)');
+
+    let resolvedContext = context || '';
+
+    // If a file was uploaded with the request, extract its text and append to context
+    if (req.file) {
+      const fileUrl = req.file.path;
+      const extractedText = await extractTextFromFile(fileUrl, req.file.originalname);
+      if (extractedText) {
+        resolvedContext += `\n\n[FILE CONTEXT PROVIDED BY USER]:\n${extractedText.substring(0, 15000)}`;
+      }
+    }
+
+    let parsedHistory = [];
+    if (history) {
+      try { parsedHistory = JSON.parse(history); } 
+      catch (e) { parsedHistory = history; } // if it's already an array
+    }
+
+    const data = await geminiService.voiceConversation(mode, resolvedContext, parsedHistory);
+    res.json(data);
+  } catch (err) {
+    next(new ApiError(500, err.message));
+  }
+};

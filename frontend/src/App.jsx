@@ -21,6 +21,7 @@ import Admin from './pages/Admin';
 import AIAssistant from './pages/AIAssistant';
 import MasterclassPlayer from './pages/MasterclassPlayer';
 import HoneyTeacher from './pages/HoneyTeacher';
+import HoneyInterviewer from './pages/HoneyInterviewer';
 
 function AuthGate({ children, fallback }) {
   const { authLoading } = useAuth();
@@ -62,7 +63,8 @@ function AppRoutes() {
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/about" element={<AboutUs />} />
-<Route path="/honey-teacher" element={<HoneyTeacher />} />
+              <Route path="/honey-teacher" element={<HoneyTeacher />} />
+              <Route path="/honey-interviewer" element={<PrivateRoute><HoneyInterviewer /></PrivateRoute>} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />

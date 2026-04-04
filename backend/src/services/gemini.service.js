@@ -277,6 +277,68 @@ class GeminiService {
       throw new Error('Could not generate the interactive masterclass.');
     }
   }
+
+  async voiceConversation(mode, contextText, history) {
+    let systemInstruction = "";
+
+    if (mode === 'interview') {
+      systemInstruction = `You are an expert HR recruiter conducting a professional job interview.
+CONTEXT ABOUT THE JOB OR CANDIDATE:
+"""
+${contextText || 'General Job Interview'}
+"""
+Your goals:
+1. Ask behavioral and technical questions relevant to the context.
+2. Listen to the user's response, evaluate it, and ask follow-up questions organically.
+3. Keep your responses concise (1-3 sentences max) because this is a real-time voice call. Do not use markdown like asterisks or bold text, just plain conversational English.
+4. If they ask you for feedback, give them constructive feedback on their performance.`;
+    } else {
+      systemInstruction = `You are a friendly, native English-speaking conversation partner helping the user practice their English fluency and conversational skills.
+USER LEARNING GOALS/CONTEXT:
+"""
+${contextText || 'General English Practice'}
+"""
+Your goals:
+1. Have a natural, flowing conversation. Ask engaging questions about their day, interests, or the provided context.
+2. Gently and warmly correct major grammatical mistakes if they make them, but prioritize keeping the conversation fun.
+3. Keep your responses very brief (1-3 sentences max) like a real voice call. Do not use markdown syntax, only plain spoken English.`;
+    }
+
+    // Format history for Gemini
+    // Gemini chat format: [{ role: 'user', parts: [{ text: '...' }] }, { role: 'model', parts: [{ text: '...' }] }]
+    const formattedHistory = [];
+    
+    // Inject system instruction in the first interaction
+    formattedHistory.push({
+      role: 'user',
+      parts: [{ text: `SYSTEM INSTRUCTION: ${systemInstruction}\n\nWe are now starting the voice conversation. Please say hello.` }]
+    });
+
+    if (history && history.length > 0) {
+      for (const msg of history) {
+        formattedHistory.push({
+          role: msg.role === 'user' ? 'user' : 'model',
+          parts: [{ text: msg.text }]
+        });
+      }
+    } else {
+      // If no history, the model will just respond to the initial prompt.
+    }
+
+    try {
+      // Because this is conversational, we should use the chat session.
+      // But we can simplify by just using the standard runWithFallback by stringifying the history 
+      // or directly use generateContent if we want structured chat. For maximum compatibility with existing code:
+      const prompt = formattedHistory.map(h => `${h.role.toUpperCase()}: ${h.parts[0].text}`).join("\n\n") + "\n\nMODEL:";
+      
+      const text = await this.runWithFallback(prompt, false);
+      return { response: text };
+
+    } catch (err) {
+      console.error('[GeminiService] Voice Conversation Error:', err);
+      throw new Error('Failed to generate voice response.');
+    }
+  }
 }
 
 module.exports = new GeminiService();

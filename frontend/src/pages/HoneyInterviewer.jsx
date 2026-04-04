@@ -1,0 +1,329 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Play, Mic, MicOff, Square, Upload, Briefcase, MessageCircle, FileText, ChevronRight, CheckCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+const Particles = () => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    {[...Array(12)].map((_, i) => (
+      <motion.div key={i} className="absolute w-1 h-1 rounded-full bg-indigo-500/30"
+        style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
+        animate={{ y: [0, -40, 0], opacity: [0.1, 0.4, 0.1], scale: [1, 1.5, 1] }}
+        transition={{ duration: 4 + Math.random() * 3, delay: Math.random() * 2, repeat: Infinity }}
+      />
+    ))}
+  </div>
+);
+
+const HoneyInterviewer = () => {
+  const { token, user } = useAuth();
+  const [step, setStep] = useState('setup'); // 'setup' | 'connecting' | 'call'
+  const [mode, setMode] = useState('interview'); // 'interview' | 'english'
+  const [contextText, setContextText] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [chatHistory, setChatHistory] = useState([]);
+  const [liveTranscript, setLiveTranscript] = useState('');
+  
+  const [error, setError] = useState('');
+
+  const recognitionRef = useRef(null);
+  const synthRef = useRef(window.speechSynthesis);
+  const scrollRef = useRef(null);
+
+  // ─── Setup Speech Recognition ───────────────────────────────────────────────
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const rec = new SpeechRecognition();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = 'en-US';
+
+      rec.onstart = () => setIsListening(true);
+      
+      rec.onresult = (e) => {
+        let interim = '';
+        let final = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) final += e.results[i][0].transcript;
+          else interim += e.results[i][0].transcript;
+        }
+        setLiveTranscript(interim);
+        if (final) {
+          handleUserSpeechDone(final);
+        }
+      };
+
+      rec.onerror = (e) => {
+        console.error('Speech Recognition Error:', e.error);
+        if (e.error !== 'no-speech') setIsListening(false);
+      };
+
+      rec.onend = () => {
+        // If it was supposed to be listening, it might have timed out automatically
+        setIsListening(false);
+      };
+
+      recognitionRef.current = rec;
+    } else {
+      setError('Voice recognition is not supported in this browser. Please use Chrome or Edge.');
+    }
+
+    return () => {
+      recognitionRef.current?.stop();
+      synthRef.current?.cancel();
+    };
+  }, []);
+
+  // Auto-scroll chat history
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [chatHistory, liveTranscript]);
+
+  const handleUserSpeechDone = async (text) => {
+    if (!text.trim()) return;
+    
+    // Stop listening while AI thinks/speaks
+    recognitionRef.current?.stop();
+    setIsListening(false);
+    setLiveTranscript('');
+
+    const newMessage = { role: 'user', text };
+    const updatedHistory = [...chatHistory, newMessage];
+    setChatHistory(updatedHistory);
+
+    try {
+      await getAIResponse(updatedHistory);
+    } catch (err) {
+      console.error(err);
+      setError('Communication error. Please try again.');
+    }
+  };
+
+  const getAIResponse = async (history) => {
+    setIsSpeaking(true);
+    
+    // Build form data if file is attached (only usually needed for setup, but we send it once and keep sending contextText)
+    // Actually, on the very first call, we send the file. The backend returns contextText?
+    // Let's simplify: Send file + initial context + mode ONCE to extract context. 
+    // But since it's a stateless backend API, we'll just send the context string if we already have it.
+    
+    const formData = new FormData();
+    formData.append('mode', mode);
+    formData.append('history', JSON.stringify(history));
+    if (contextText) formData.append('context', contextText);
+    if (selectedFile) formData.append('file', selectedFile);
+
+    try {
+      const res = await fetch(`${API_BASE}/ai/voice-chat`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!res.ok) throw new Error('API Error');
+      const data = await res.json();
+      const aiText = data.response || "I didn't quite catch that.";
+
+      setChatHistory(prev => [...prev, { role: 'model', text: aiText }]);
+      speakText(aiText);
+
+    } catch (err) {
+      setIsSpeaking(false);
+      setError('Network error processing your voice.');
+    }
+  };
+
+  const speakText = (text) => {
+    if (!synthRef.current) return;
+    synthRef.current.cancel();
+
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.95;
+    
+    const voices = synthRef.current.getVoices();
+    const best = voices.find(v => (v.name.includes('Google') || v.name.includes('Microsoft')) && v.lang.startsWith('en'));
+    if (best) u.voice = best;
+
+    u.onstart = () => setIsSpeaking(true);
+    u.onend = () => {
+      setIsSpeaking(false);
+      // Auto-resume listening after AI finishes speaking
+      if (step === 'call') {
+         setTimeout(() => startListening(), 500);
+      }
+    };
+    u.onerror = () => setIsSpeaking(false);
+    
+    synthRef.current.speak(u);
+  };
+
+  const startListening = () => {
+    if (isSpeaking) synthRef.current?.cancel();
+    try {
+      recognitionRef.current?.start();
+      setIsListening(true);
+    } catch(e) {
+      // already started usually
+    }
+  };
+
+  const stopListening = () => {
+    recognitionRef.current?.stop();
+    setIsListening(false);
+  };
+
+  const startCall = async () => {
+    setStep('connecting');
+    // First trigger the AI to say hello using an empty history
+    await getAIResponse([]);
+    setStep('call');
+  };
+
+  const endCall = () => {
+    stopListening();
+    synthRef.current?.cancel();
+    setStep('setup');
+    setChatHistory([]);
+    setSelectedFile(null);
+    setContextText('');
+  };
+
+
+  // ─── RENDERS ────────────────────────────────────────────────────────────────
+  
+  if (step === 'setup') {
+    return (
+      <div className="min-h-screen bg-[#020617] text-white flex flex-col py-10 px-4 md:px-8 relative overflow-hidden">
+        <Particles />
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
+        
+        <div className="w-full max-w-3xl mx-auto flex-1 flex flex-col pt-10 relative z-10">
+          <motion.div initial={{opacity: 0, y: 20}} animate={{opacity: 1, y: 0}} className="text-center mb-10">
+            <h1 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-fuchsia-400 mb-4">Honey Interviewer</h1>
+            <p className="text-slate-400 text-lg">Your voice-driven AI recruiter and conversation partner. Pick your mode, provide context, and start talking.</p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-5 mb-8">
+            <button onClick={() => setMode('interview')} className={`p-6 rounded-3xl border-2 text-left transition-all ${mode === 'interview' ? 'bg-indigo-900/40 border-indigo-500 shadow-[0_0_30px_rgba(99,102,241,0.2)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`}>
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-4"><Briefcase className="w-6 h-6" /></div>
+              <h3 className="text-xl font-bold mb-2">Job Interview Prep</h3>
+              <p className="text-sm text-slate-400 line-clamp-2">Upload a job description. The AI will act as a hiring manager asking behavioral & technical questions.</p>
+              {mode === 'interview' && <CheckCircle className="absolute top-6 right-6 w-6 h-6 text-indigo-400" />}
+            </button>
+            <button onClick={() => setMode('english')} className={`p-6 rounded-3xl border-2 text-left transition-all relative ${mode === 'english' ? 'bg-fuchsia-900/40 border-fuchsia-500 shadow-[0_0_30px_rgba(217,70,239,0.2)]' : 'bg-white/5 border-white/10 hover:border-white/20'}`}>
+              <div className="w-12 h-12 rounded-2xl bg-fuchsia-500/20 text-fuchsia-400 flex items-center justify-center mb-4"><MessageCircle className="w-6 h-6" /></div>
+              <h3 className="text-xl font-bold mb-2">English Practice</h3>
+              <p className="text-sm text-slate-400">Casual voice conversation partner. Gently corrects grammar and helps you build speaking confidence.</p>
+              {mode === 'english' && <CheckCircle className="absolute top-6 right-6 w-6 h-6 text-fuchsia-400" />}
+            </button>
+          </div>
+
+          <div className="bg-slate-900/60 border border-white/10 rounded-3xl p-6 md:p-8 mb-8 backdrop-blur-xl">
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-indigo-400" /> Provide Context</h3>
+            <p className="text-xs text-slate-400 mb-4">{mode === 'interview' ? 'Paste the Job Description or upload the posting as a PDF/Docx.' : 'What do you want to talk about? (e.g., "I want to practice ordering food at a restaurant" or "Just chat about movies").'}</p>
+            
+            <textarea
+              value={contextText} onChange={e => setContextText(e.target.value)}
+              placeholder="Type or paste context here..."
+              className="w-full h-32 bg-black/40 border border-white/10 rounded-2xl p-4 text-sm text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 mb-4 resize-none"
+            />
+            
+            <label className="flex items-center justify-center gap-2 w-full py-4 rounded-xl border border-dashed border-white/20 bg-white/5 hover:bg-white/10 cursor-pointer transition-colors group">
+              <input type="file" className="hidden" accept=".pdf,.doc,.docx,.txt" onChange={e => setSelectedFile(e.target.files?.[0])} />
+              <Upload className="w-5 h-5 text-slate-400 group-hover:text-indigo-400 transition-colors" />
+              <span className="text-sm font-medium text-slate-300 group-hover:text-white">{selectedFile ? selectedFile.name : 'Or upload a document (PDF, DOCX)'}</span>
+            </label>
+          </div>
+
+          {error && <div className="text-red-400 mb-4 text-center font-medium bg-red-500/10 py-3 rounded-xl border border-red-500/20">{error}</div>}
+
+          <button onClick={startCall} className="w-full py-5 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-lg flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30 hover:scale-[1.02] active:scale-95 transition-all">
+            <Mic className="w-6 h-6" /> Start Voice Session
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Active Call Screen
+  return (
+    <div className="min-h-screen bg-[#020617] text-white flex flex-col relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.15),transparent_70%)] pointer-events-none" />
+      
+      {/* Header */}
+      <header className="px-6 py-4 flex items-center justify-between border-b border-white/5 z-20">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center font-black">AI</div>
+          <div>
+            <div className="text-sm font-bold leading-tight">{mode === 'interview' ? 'Hiring Manager' : 'Conversation Partner'}</div>
+            <div className="text-[10px] text-green-400 uppercase tracking-widest flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Connected
+            </div>
+          </div>
+        </div>
+        <button onClick={endCall} className="px-4 py-2 rounded-lg bg-red-500/20 hover:bg-red-500/40 border border-red-500/50 text-red-400 text-xs font-bold transition-colors">End Call</button>
+      </header>
+
+      {/* Main Call Area */}
+      <main className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
+        
+        {/* Pulsing Avatar */}
+        <div className="relative mb-16">
+          <AnimatePresence>
+            {(isListening || isSpeaking) && (
+              <>
+                <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: [1, 1.5, 1], opacity: [0, 0.3, 0] }} transition={{ duration: 2, repeat: Infinity }} className={`absolute inset-0 rounded-full blur-xl ${isSpeaking ? 'bg-indigo-500' : 'bg-emerald-500'}`} />
+                <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: [1, 2.5, 1], opacity: [0, 0.1, 0] }} transition={{ duration: 2.5, repeat: Infinity, delay: 0.2 }} className={`absolute inset-0 rounded-full blur-2xl ${isSpeaking ? 'bg-purple-500' : 'bg-cyan-500'}`} />
+              </>
+            )}
+          </AnimatePresence>
+          
+          <motion.div animate={isListening ? { scale: 1.05 } : isSpeaking ? { scale: [1, 1.1, 1] } : { scale: 1 }} transition={isSpeaking ? { duration: 0.5, repeat: Infinity, repeatType: 'reverse' } : {}} className={`w-36 h-36 md:w-48 md:h-48 rounded-full border-4 flex items-center justify-center flex-col z-10 relative bg-slate-900 shadow-2xl ${isSpeaking ? 'border-indigo-500 shadow-indigo-500/50' : isListening ? 'border-emerald-500 shadow-emerald-500/50' : 'border-white/10'}`}>
+            <span className="text-5xl md:text-7xl mb-2">{isSpeaking ? '💬' : isListening ? '👂' : '😴'}</span>
+            <span className="text-[10px] uppercase font-black tracking-widest text-slate-400">{isSpeaking ? 'AI Speaking' : isListening ? 'Listening...' : 'Paused'}</span>
+          </motion.div>
+        </div>
+
+        {/* Live Subtitles / History */}
+        <div className="w-full max-w-2xl h-48 md:h-64 rounded-3xl bg-black/40 border border-white/5 backdrop-blur-xl p-5 overflow-y-auto mb-10 flex flex-col gap-4 font-medium" ref={scrollRef}>
+          {chatHistory.length === 0 && !isSpeaking && !isListening && (
+            <div className="text-center text-slate-500 my-auto text-sm">Waiting for the AI to connect...</div>
+          )}
+          {chatHistory.map((msg, i) => (
+            <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+              <div className="text-[10px] text-slate-500 font-black tracking-wider uppercase mb-1">{msg.role === 'user' ? 'You' : 'AI'}</div>
+              <div className={`px-4 py-2.5 rounded-2xl max-w-[85%] text-sm leading-relaxed ${msg.role === 'user' ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-slate-800 text-slate-200 rounded-bl-none border border-white/5'}`}>{msg.text}</div>
+            </div>
+          ))}
+          {liveTranscript && (
+            <div className="flex flex-col items-end">
+              <div className="text-[10px] text-emerald-500 font-black tracking-wider uppercase mb-1">You (Muttering)</div>
+              <div className="px-4 py-2.5 rounded-2xl max-w-[85%] text-sm leading-relaxed bg-emerald-900/30 text-emerald-100 border border-emerald-500/30 rounded-br-none italic">{liveTranscript}...</div>
+            </div>
+          )}
+        </div>
+
+        {/* Controls */}
+        <div className="flex items-center gap-6">
+          <button onClick={isListening ? stopListening : startListening} className={`w-20 h-20 rounded-full flex items-center justify-center border-4 transition-all ${isListening ? 'bg-red-500/20 border-red-500 text-red-500' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}`}>
+            {isListening ? <Square className="w-8 h-8 flex-shrink-0 fill-current" /> : <Mic className="w-8 h-8" />}
+          </button>
+        </div>
+        <p className="text-slate-500 text-xs mt-6 text-center max-w-sm font-medium">
+          {isListening ? "Speak clearly into your microphone. Say what you want, then pause." : "Microphone is off. Click to talk when you're ready to answer."}
+        </p>
+
+      </main>
+    </div>
+  );
+};
+
+export default HoneyInterviewer;

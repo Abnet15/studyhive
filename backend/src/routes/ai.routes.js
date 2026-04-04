@@ -4,7 +4,8 @@ const {
   generateQuiz, 
   analyzeFile,
   chat,
-  generateMasterclass
+  generateMasterclass,
+  voiceChat
 } = require('../controllers/ai.controller');
 const { requireAuth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -16,6 +17,7 @@ router.post('/generate-quiz', requireAuth, generateQuiz);
 router.post('/analyze-file', requireAuth, upload.single('file'), analyzeFile);
 router.post('/chat', requireAuth, chat);
 router.post('/masterclass', requireAuth, generateMasterclass);
+router.post('/voice-chat', requireAuth, upload.single('file'), voiceChat);
 
 // ── Public endpoint: no login required — powers the Honey Teacher demo page
 router.post('/public-masterclass', generateMasterclass);
