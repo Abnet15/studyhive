@@ -169,97 +169,103 @@ const MaterialDetail = () => {
         </button>
 
         {/* ───── Main Header Card ───── */}
-        <motion.div initial="hidden" animate="visible" variants={fadeIn} className="glass-card p-8 md:p-12 relative overflow-hidden shadow-2xl shadow-primary-500/5">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-primary-500/20 to-transparent blur-3xl rounded-full"></div>
+        <motion.div initial="hidden" animate="visible" variants={fadeIn} className="glass-card p-8 md:p-10 relative overflow-hidden shadow-2xl border border-white/40 dark:border-white/10 bg-white/70 dark:bg-slate-900/60 backdrop-blur-3xl rounded-[2.5rem]">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-primary-500/30 to-indigo-500/10 blur-[80px] rounded-full pointer-events-none"></div>
           
-          <div className="flex flex-col lg:flex-row gap-8 justify-between items-start relative z-10">
+          <div className="flex flex-col lg:flex-row gap-10 justify-between items-start relative z-10">
              <div className="flex-1 space-y-6">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="px-4 py-1.5 bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded-lg text-sm font-black tracking-widest uppercase shadow-sm">
+                  <span className="px-5 py-2 bg-primary-50 dark:bg-primary-900/40 text-primary-600 dark:text-primary-300 rounded-[1rem] text-sm font-black tracking-widest uppercase border border-primary-100 dark:border-primary-800 shadow-sm">
                     {course?.course_code || 'GEN'}
                   </span>
-                  <span className={`px-4 py-1.5 rounded-lg text-sm font-black tracking-widest uppercase shadow-sm ${material.material_type === 'exam' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}>
+                  <span className={`px-5 py-2 rounded-[1rem] text-sm font-black tracking-widest uppercase border border-slate-200 dark:border-slate-800 shadow-sm ${material.material_type === 'exam' ? 'bg-red-50 text-red-600 dark:bg-red-900/40 dark:text-red-300' : 'bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}>
                     {material.material_type === 'exam' ? 'Exam' : 'Material'}
                   </span>
                   {hasAI && (
-                     <span className="flex items-center gap-1 px-4 py-1.5 bg-accent-100 text-accent-700 dark:bg-accent-900/40 dark:text-accent-300 rounded-lg text-sm font-black tracking-widest uppercase shadow-sm border border-accent-200 dark:border-accent-800">
-                        <Sparkles className="w-4 h-4"/> AI Enhanced
+                     <span className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-fuchsia-50 to-indigo-50 text-indigo-600 dark:from-fuchsia-900/20 dark:to-indigo-900/20 dark:text-indigo-300 rounded-[1rem] text-sm font-black tracking-widest uppercase border border-indigo-100 dark:border-indigo-800/50 shadow-sm">
+                        <Sparkles className="w-4 h-4 text-fuchsia-500"/> AI ENHANCED
                      </span>
                   )}
                 </div>
                 
                 <div>
-                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 dark:text-white leading-[1.1] mb-2 tracking-tight">
+                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white leading-[1.1] mb-4 tracking-tight flex items-center gap-4">
+                     <span className="p-3 bg-gradient-to-br from-primary-500 to-indigo-500 rounded-2xl text-white shadow-lg shadow-primary-500/30">
+                       <FileText className="w-8 h-8 md:w-12 md:h-12" />
+                     </span>
                      {material.title}
                    </h1>
-                   <p className="text-xl text-slate-500 dark:text-slate-400 font-medium">
+                   <p className="text-xl text-slate-500 dark:text-slate-400 font-bold ml-1">
                      {courseLabel}
                    </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-8 pt-4 border-t border-slate-200 dark:border-slate-800">
-                   <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary-500 to-indigo-500 flex items-center justify-center text-white font-bold shadow-md">
+                <div className="flex flex-wrap items-center gap-8 pt-6 border-t border-slate-200 dark:border-slate-800/50">
+                   <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 px-4 py-2 rounded-2xl border border-slate-100 dark:border-slate-800">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary-500 to-indigo-500 flex items-center justify-center text-white font-bold shadow-md shadow-primary-500/20">
                          {uploaderName.charAt(0)}
                       </div>
                       <div>
-                         <div className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-widest">Uploader</div>
-                         <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1">
+                         <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-widest">Uploader</div>
+                         <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1 text-sm">
                             {uploaderName} <BadgeCheck className="w-4 h-4 text-primary-500"/>
                          </div>
                       </div>
                    </div>
-                   <div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-widest mb-1">Rating</div>
-                      <div className="flex items-center gap-1 group" title={isOwner ? 'You cannot rate your own uploads' : 'Submit your rating'}>
-                         {[1, 2, 3, 4, 5].map((star) => (
-                           <Star 
-                             key={star}
-                             className={`w-5 h-5 transition-all ${
-                               isOwner ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
-                             } ${
-                               (ratingHover || material.rating) >= star 
-                                 ? 'fill-amber-400 text-amber-400' 
-                                 : 'text-slate-300 dark:text-slate-700'
-                             }`}
-                             onMouseEnter={() => !isOwner && setRatingHover(star)}
-                             onMouseLeave={() => !isOwner && setRatingHover(0)}
-                             onClick={() => !isOwner && handleRate(star)}
-                           />
-                         ))}
-                         <span className="ml-2 font-bold text-slate-700 dark:text-slate-300">({material.rating || 0})</span>
+                   <div className="bg-slate-50 dark:bg-slate-800/50 px-4 py-2 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-4">
+                      <div>
+                         <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-widest">Rating</div>
+                         <div className="flex items-center gap-0.5 group mt-0.5" title={isOwner ? 'You cannot rate your own uploads' : 'Submit your rating'}>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star 
+                                key={star}
+                                className={`w-4 h-4 transition-all ${
+                                  isOwner ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                                } ${
+                                  (ratingHover || material.rating) >= star 
+                                    ? 'fill-amber-400 text-amber-400 hover:scale-110' 
+                                    : 'text-slate-300 dark:text-slate-700 hover:text-amber-200'
+                                }`}
+                                onMouseEnter={() => !isOwner && setRatingHover(star)}
+                                onMouseLeave={() => !isOwner && setRatingHover(0)}
+                                onClick={() => !isOwner && handleRate(star)}
+                              />
+                            ))}
+                            <span className="ml-2 font-black text-slate-700 dark:text-slate-300 text-sm">({material.rating || 0})</span>
+                         </div>
                       </div>
                    </div>
                 </div>
              </div>
 
-             <div className="flex flex-col gap-4 w-full lg:w-64 shrink-0">
-                <button onClick={handleDownload} className="btn-primary py-5 text-lg w-full flex items-center justify-center shadow-xl shadow-primary-500/20">
-                  <DownloadCloud className="w-6 h-6 mr-2" /> Download File
+             <div className="flex flex-col gap-3 w-full lg:w-72 shrink-0 bg-white/50 dark:bg-slate-900/50 p-4 rounded-[2rem] border border-white/60 dark:border-white/10 backdrop-blur-md shadow-xl">
+                {hasAI && (
+                  <button onClick={() => navigate(`/masterclass/${material.id}`)} className="py-4 px-6 w-full flex items-center justify-center gap-3 bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:from-fuchsia-500 hover:to-indigo-500 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-500/30 active:scale-95 group relative overflow-hidden">
+                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                     <div className="p-2 bg-white/20 rounded-xl group-hover:scale-110 transition-transform"><PlayCircle className="w-5 h-5" /></div>
+                     <span className="tracking-wide">Start AI Masterclass</span>
+                  </button>
+                )}
+                <button onClick={handleDownload} className="py-4 px-6 w-full flex items-center justify-center gap-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 rounded-2xl font-bold transition-all shadow-md active:scale-95 group">
+                  <DownloadCloud className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" /> Download File
                 </button>
-                <div className="flex gap-3">
-                   <button onClick={handleShare} className="btn-secondary py-4 flex-1 flex items-center justify-center">
-                     <Share2 className="w-5 h-5 mr-2" /> Share
+                <div className="flex gap-2">
+                   <button onClick={handleShare} className="py-3 flex-1 flex items-center justify-center gap-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-2xl font-bold transition-colors shadow-sm">
+                     <Share2 className="w-4 h-4" /> Share
                    </button>
                    <button 
                      onClick={handleBookmark}
                      disabled={bookmarkLoading}
-                     className={`py-4 px-5 rounded-2xl font-bold transition-all duration-300 flex items-center justify-center border ${
+                     className={`py-3 flex-1 flex items-center justify-center gap-2 border rounded-2xl font-bold transition-all duration-300 shadow-sm ${
                        bookmarked 
                          ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-600' 
-                         : 'bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-500 hover:text-amber-500 hover:border-amber-300'
+                         : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:text-amber-500 hover:border-amber-300 dark:hover:border-amber-700'
                      }`}
                    >
-                     {bookmarked ? <BookmarkCheck className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
+                     {bookmarked ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />} Save
                    </button>
                 </div>
-                {hasAI && (
-                  <button onClick={() => navigate(`/masterclass/${material.id}`)} className="btn-secondary py-4 w-full flex items-center justify-center border-indigo-500/30 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 hover:text-white hover:bg-indigo-500 hover:border-indigo-500 transition-all shadow-md mt-2 relative overflow-hidden group">
-                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                     <PlayCircle className="w-5 h-5 mr-2" /> Start AI Masterclass
-                  </button>
-                )}
-                <div className="text-center text-sm font-bold text-slate-500 dark:text-slate-400 mt-2">
+                <div className="text-center text-xs font-bold text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-widest">
                    {material.downloads} total downloads
                 </div>
              </div>
@@ -272,41 +278,41 @@ const MaterialDetail = () => {
            <motion.div initial="hidden" animate="visible" variants={fadeIn} transition={{ delay: 0.2 }} className="lg:col-span-2 space-y-8">
               
               {hasAI ? (
-                 <div className="glass-card p-1 border-primary-500/30 overflow-hidden shadow-2xl shadow-primary-500/10">
-                    <div className="flex bg-slate-100 dark:bg-slate-900 border-b border-primary-500/20 rounded-t-[1.8rem] p-1">
+                 <div className="glass-card p-2 border-slate-200 dark:border-slate-800 overflow-hidden shadow-2xl">
+                    <div className="flex bg-slate-100/50 dark:bg-slate-800/50 p-2 rounded-3xl mb-2 gap-2 border border-white/50 dark:border-white/5 relative z-10 backdrop-blur-sm">
                        {['summary', 'keyterms', 'quiz'].map(tab => (
                          <button 
                            key={tab}
                            onClick={() => setActiveTab(tab)}
-                           className={`flex-1 py-4 text-center font-bold tracking-wide capitalize rounded-[1.5rem] transition-all duration-300 ${activeTab === tab ? 'bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                           className={`flex-1 py-3.5 text-center font-bold tracking-wide capitalize rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 ${activeTab === tab ? 'bg-white dark:bg-slate-700 text-primary-600 dark:text-primary-400 shadow-md transform scale-[1.02]' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'}`}
                          >
-                            {tab === 'summary' && '📝 AI Summary'}
-                            {tab === 'keyterms' && '🔑 Key Terms'}
-                            {tab === 'quiz' && '🎯 Auto-Quiz'}
+                            {tab === 'summary' && <><FileText className="w-4 h-4"/> Summary</>}
+                            {tab === 'keyterms' && <><BrainCircuit className="w-4 h-4"/> Terms</>}
+                            {tab === 'quiz' && <><Target className="w-4 h-4"/> Auto-Quiz</>}
                          </button>
                        ))}
                     </div>
-                    <div className="p-8 bg-white dark:bg-slate-900 rounded-b-[1.8rem] min-h-[300px]">
+                    <div className="p-8 bg-white dark:bg-slate-900 rounded-[2rem] min-h-[300px] border border-slate-100 dark:border-slate-800 shadow-inner">
                        <AnimatePresence mode="wait">
                           {activeTab === 'summary' && (
-                             <motion.div key="summary" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-4">
-                                <h3 className="text-2xl font-bold flex items-center gap-2"><Sparkles className="text-primary-500"/> Document Abstract</h3>
-                                <p className="text-lg leading-relaxed text-slate-700 dark:text-slate-300">
+                             <motion.div key="summary" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
+                                <h3 className="text-xl font-bold flex items-center gap-2 text-slate-800 dark:text-white"><Sparkles className="text-primary-500 w-5 h-5"/> Document Abstract</h3>
+                                <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 leading-relaxed text-slate-700 dark:text-slate-300 text-lg shadow-sm">
                                    {material.aiSummary}
-                                </p>
+                                </div>
                              </motion.div>
                           )}
                           {activeTab === 'keyterms' && (
                              <motion.div key="keyterms" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
-                                <h3 className="text-2xl font-bold flex items-center gap-2"><Sparkles className="text-accent-500"/> Critical Vocabulary</h3>
+                                <h3 className="text-xl font-bold flex items-center gap-2 text-slate-800 dark:text-white"><BrainCircuit className="text-fuchsia-500 w-5 h-5"/> Critical Vocabulary</h3>
                                 <div className="flex flex-wrap gap-3">
-                                   {material.aiKeyTerms && material.aiKeyTerms.length > 0 ? (
+                                   {material.aiKeyTerms && material.aiKeyTerms.length > 0 && !material.aiKeyTerms[0].includes("No valid HTTP URL") ? (
                                       material.aiKeyTerms.map((term, i) => (
-                                         <div key={i} className="px-5 py-3 rounded-xl bg-accent-50 dark:bg-accent-900/20 border border-accent-200 dark:border-accent-800 text-accent-800 dark:text-accent-300 font-bold hover:-translate-y-1 transition-transform cursor-pointer shadow-sm">
+                                         <div key={i} className="px-5 py-3 rounded-xl bg-gradient-to-r from-fuchsia-50 to-indigo-50 dark:from-fuchsia-900/20 dark:to-indigo-900/20 border border-fuchsia-200 dark:border-fuchsia-800 text-indigo-800 dark:text-indigo-300 font-bold hover:-translate-y-1 transition-transform cursor-pointer shadow-sm">
                                             {term}
                                          </div>
                                       ))
-                                   ) : <p className="text-slate-500">No key terms extracted.</p>}
+                                   ) : <div className="w-full p-6 text-center text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 font-medium">No key terms were extracted from this material.</div>}
                                 </div>
                              </motion.div>
                           )}

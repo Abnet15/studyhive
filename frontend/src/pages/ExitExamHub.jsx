@@ -13,20 +13,46 @@ import {
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// ─── Ethiopian University Departments ────────────────────────────────────────
-const DEPARTMENTS = [
-  { id: 'Computer Science', icon: '💻', color: 'from-blue-500 to-indigo-600' },
-  { id: 'Software Engineering', icon: '⚙️', color: 'from-violet-500 to-purple-600' },
-  { id: 'Information Technology', icon: '🌐', color: 'from-cyan-500 to-blue-600' },
-  { id: 'Information Systems', icon: '📊', color: 'from-emerald-500 to-teal-600' },
-  { id: 'Electrical Engineering', icon: '⚡', color: 'from-amber-500 to-orange-600' },
-  { id: 'Mechanical Engineering', icon: '🔧', color: 'from-red-500 to-rose-600' },
-  { id: 'Civil Engineering', icon: '🏗️', color: 'from-stone-500 to-stone-700' },
-  { id: 'Business Administration', icon: '📈', color: 'from-fuchsia-500 to-pink-600' },
-  { id: 'Accounting', icon: '🧾', color: 'from-lime-500 to-green-600' },
-  { id: 'Law', icon: '⚖️', color: 'from-yellow-500 to-amber-600' },
-  { id: 'Medicine', icon: '🩺', color: 'from-red-400 to-red-600' },
-  { id: 'Architecture', icon: '🏛️', color: 'from-slate-500 to-slate-700' },
+// ─── Ethiopian University Faculties & Departments ───────────────────────────
+const FACULTIES = [
+  {
+    id: 'Computing & Informatics',
+    icon: '💻', color: 'from-indigo-600 to-blue-500',
+    departments: [
+      { id: 'Computer Science', icon: '💻', color: 'from-blue-500 to-indigo-500' },
+      { id: 'Software Engineering', icon: '⚙️', color: 'from-violet-500 to-purple-500' },
+      { id: 'Information Technology', icon: '🌐', color: 'from-cyan-500 to-blue-500' },
+      { id: 'Information Systems', icon: '📊', color: 'from-teal-500 to-emerald-500' },
+    ]
+  },
+  {
+    id: 'Engineering & Technology',
+    icon: '🏗️', color: 'from-orange-500 to-amber-500',
+    departments: [
+      { id: 'Electrical Engineering', icon: '⚡', color: 'from-amber-400 to-yellow-500' },
+      { id: 'Mechanical Engineering', icon: '🔧', color: 'from-orange-400 to-orange-500' },
+      { id: 'Civil Engineering', icon: '🏗️', color: 'from-stone-500 to-stone-600' },
+      { id: 'Architecture', icon: '🏛️', color: 'from-slate-600 to-slate-700' },
+    ]
+  },
+  {
+    id: 'Business & Law',
+    icon: '⚖️', color: 'from-pink-500 to-rose-500',
+    departments: [
+      { id: 'Business Administration', icon: '📈', color: 'from-fuchsia-500 to-pink-500' },
+      { id: 'Accounting', icon: '🧾', color: 'from-lime-500 to-green-500' },
+      { id: 'Law', icon: '⚖️', color: 'from-yellow-500 to-amber-500' },
+    ]
+  },
+  {
+    id: 'Health & Medicine',
+    icon: '⚕️', color: 'from-emerald-500 to-teal-500',
+    departments: [
+      { id: 'Medicine', icon: '🩺', color: 'from-teal-400 to-emerald-400' },
+      { id: 'Nursing', icon: '🩹', color: 'from-cyan-400 to-sky-500' },
+      { id: 'Pharmacy', icon: '💊', color: 'from-indigo-400 to-blue-500' },
+    ]
+  }
 ];
 
 // ─── Animated Background Particles ───────────────────────────────────────────
@@ -211,7 +237,7 @@ const ExitExamHub = () => {
   // ─── RENDER: Department Selection ──────────────────────────────────────────
   if (phase === 'select') {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-[#030712] py-12 px-4 relative overflow-hidden">
+      <div className="min-h-[calc(100vh-80px)] mt-6 md:mt-12 bg-slate-50 dark:bg-[#030712] py-4 px-4 relative overflow-hidden">
         <Particles />
         <div className="absolute top-[-15%] right-[-10%] w-[45%] h-[45%] bg-primary-500/10 rounded-full blur-[120px] pointer-events-none" />
 
@@ -221,38 +247,68 @@ const ExitExamHub = () => {
               <GraduationCap className="w-4 h-4" /> Powered by Honey AI
             </div>
             <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white mb-4">
-              Exit Exam <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-indigo-500">Preparation Hub</span>
+              Honey Exit <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-indigo-500">Indicator</span>
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
               Select your department below. Our AI will generate a comprehensive diagnostic exam covering all core competencies of your program and show you exactly where you need to improve.
             </p>
           </motion.div>
 
-          <motion.div 
-            initial="hidden" animate="visible"
-            variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.04 } }}}
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
-          >
-            {DEPARTMENTS.map((dept) => (
-              <motion.button
-                key={dept.id}
-                variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 }}}
-                whileHover={{ y: -4, scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => startExam(dept.id)}
-                className="relative p-6 rounded-2xl border border-slate-200 dark:border-white/10 
-                  bg-white dark:bg-slate-900/60 backdrop-blur-sm text-left
-                  hover:border-primary-300 dark:hover:border-primary-700 
-                  hover:shadow-xl dark:hover:shadow-primary-900/20
-                  transition-all duration-300 group overflow-hidden"
+          <div className="space-y-16">
+            {FACULTIES.map((fac, idx) => (
+              <motion.div 
+                key={fac.id}
+                initial="hidden" animate="visible"
+                variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { staggerChildren: 0.05, delay: idx * 0.1 } }}}
+                className="relative"
               >
-                <div className={`absolute inset-0 bg-gradient-to-br ${dept.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
-                <div className="text-3xl mb-3">{dept.icon}</div>
-                <div className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{dept.id}</div>
-                <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 absolute top-4 right-4 group-hover:text-primary-500 group-hover:translate-x-1 transition-all" />
-              </motion.button>
+                {/* Faculty Header */}
+                <div className="flex items-center gap-4 mb-6">
+                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${fac.color} flex items-center justify-center text-xl text-white shadow-xl shadow-[rgba(0,0,0,0.1)]`}>
+                    {fac.icon}
+                  </div>
+                  <div>
+                    <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{fac.id}</h2>
+                    <div className="h-1 w-12 bg-gradient-to-r from-primary-500 to-transparent rounded-full mt-1"></div>
+                  </div>
+                </div>
+
+                {/* Departments Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+                  {fac.departments.map((dept) => (
+                    <motion.button
+                      key={dept.id}
+                      variants={{ hidden: { opacity: 0, scale: 0.95 }, visible: { opacity: 1, scale: 1 }}}
+                      whileHover={{ y: -5, scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => startExam(dept.id)}
+                      className="relative p-5 md:p-6 rounded-[1.5rem] border border-slate-200 dark:border-white/10 
+                        bg-white dark:bg-slate-900/60 backdrop-blur-xl text-left
+                        hover:border-primary-400 dark:hover:border-primary-500/50 
+                        shadow-md hover:shadow-2xl hover:shadow-primary-500/10 dark:shadow-none dark:hover:shadow-[0_0_30px_rgba(99,102,241,0.15)]
+                        transition-all duration-500 group overflow-hidden flex flex-col h-full min-h-[140px]"
+                    >
+                      {/* Interactive Hover Gradient Glow */}
+                      <div className={`absolute inset-0 bg-gradient-to-br ${dept.color} opacity-0 group-hover:opacity-5 dark:group-hover:opacity-[0.08] transition-opacity duration-500`} />
+                      
+                      <div className="relative z-10 flex justify-between items-start mb-auto">
+                        <div className={`w-12 h-12 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 flex items-center justify-center text-2xl shadow-inner group-hover:scale-110 transition-transform duration-500 group-hover:rotate-3`}>
+                          {dept.icon}
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center group-hover:bg-primary-500 group-hover:text-white dark:group-hover:bg-primary-500 text-slate-300 dark:text-slate-600 transition-colors shadow-sm">
+                          <ChevronRight className="w-4 h-4" />
+                        </div>
+                      </div>
+                      
+                      <div className="relative z-10 mt-4">
+                        <div className="text-[13px] md:text-[15px] font-black text-slate-900 dark:text-white leading-snug group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{dept.id}</div>
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </div>
     );
@@ -261,7 +317,7 @@ const ExitExamHub = () => {
   // ─── RENDER: Loading ───────────────────────────────────────────────────────
   if (phase === 'loading') {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-[#030712] flex flex-col items-center justify-center px-4">
+      <div className="min-h-[calc(100vh-80px)] mt-4 md:mt-12 bg-slate-50 dark:bg-[#030712] flex flex-col items-center justify-center px-4">
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
           <motion.div
             animate={{ rotate: 360 }}
@@ -295,11 +351,11 @@ const ExitExamHub = () => {
     const isTimeLow = timeLeft < 60;
 
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-[#030712] flex flex-col relative overflow-hidden">
+      <div className="min-h-[calc(100vh-80px)] mt-10 md:mt-16 bg-slate-50 dark:bg-[#030712] flex flex-col relative overflow-hidden">
         {/* ─── Top Bar ──────────────────────────────────────── */}
-        <div className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 px-4 md:px-8 py-3">
+        <div className="relative z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-b border-t border-slate-200 dark:border-white/5 px-4 md:px-8 py-3 rounded-3xl shadow-sm mx-2 md:mx-6 mb-2">
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-1 items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
                 <Target className="w-5 h-5 text-primary-600 dark:text-primary-400" />
               </div>
@@ -467,7 +523,7 @@ const ExitExamHub = () => {
     const grade = getGrade(overallPercent);
 
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-[#030712] py-12 px-4 relative overflow-hidden">
+      <div className="min-h-[calc(100vh-80px)] mt-6 md:mt-12 bg-slate-50 dark:bg-[#030712] py-8 px-4 relative overflow-hidden">
         <Particles />
         <div className="max-w-5xl mx-auto relative z-10">
           

@@ -51,7 +51,7 @@ const Navbar = () => {
     { name: 'Honey Hub', path: '/ai-assistant', desc: 'Tools & Quizzes', icon: <BrainCircuit className="w-5 h-5 text-primary-500"/> },
     { name: 'Honey Interviewer', path: '/honey-interviewer', desc: 'Mock Interviews', icon: <Mic className="w-5 h-5 text-emerald-500"/> },
     { name: 'Honey Teacher', path: '/honey-teacher', desc: 'Virtual Tutor', icon: <Sparkles className="w-5 h-5 text-amber-500"/>, highlight: true },
-    { name: 'Exit Exam Prep', path: '/exit-exam', desc: 'Diagnostic Tests', icon: <GraduationCap className="w-5 h-5 text-rose-500"/> },
+    { name: 'Honey Exit Indicator', path: '/exit-exam', desc: 'Diagnostic Tests', icon: <GraduationCap className="w-5 h-5 text-rose-500"/> },
   ];
 
   const isAdmin = user?.role === 'admin';

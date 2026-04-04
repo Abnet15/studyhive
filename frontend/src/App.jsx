@@ -65,7 +65,7 @@ function AppRoutes() {
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/about" element={<AboutUs />} />
-              <Route path="/honey-teacher" element={<HoneyTeacher />} />
+              <Route path="/honey-teacher" element={<PrivateRoute><HoneyTeacher /></PrivateRoute>} />
               <Route path="/honey-interviewer" element={<PrivateRoute><HoneyInterviewer /></PrivateRoute>} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />

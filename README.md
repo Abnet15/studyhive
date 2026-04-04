@@ -260,3 +260,14 @@ cd frontend && npm install && npm run dev
   <i>Built to change the way university students interact with knowledge.</i><br><br>
   <b>🐝 StudyHive — Where Knowledge Comes Alive.</b>
 </div>
+
+
+## 🌟 Advanced AI Features (BiT AI Hackathon 2026)
+
+StudyHive brings educational platforming to the next level by natively integrating deep AI capabilities aimed at completely reimagining how users consume and retain knowledge:
+
+- **AI Assistant (Honey Hub)**: A context-aware chatbot and AI Swiss knife that supports document Q&A, quiz generation, automated course summarizations, and generating dynamic explanations based on uploaded material.
+- **Honey Teacher (Virtual Tutor)**: A highly interactive, visually animated teaching assistant. It takes any topic and fully autonomously synthesizes a complete slide deck and animated "masterclass" presenting the content with different expert personas, utilizing Speech Synthesis and visually stunning Framer Motion workflows.
+- **Honey Interviewer**: A mock-interview simulator tailored for software engineers and professionals. Conducts live voice-to-text behavioral and technical interviews, grading the user's responses, offering corrective explanations, and tracking metrics.
+- **Honey Exit Indicator**: A rich dashboard dedicated to providing analytical probability on exit exam readiness, powered by AI extrapolation of the student's historical quiz, interview, and lesson performances.
+

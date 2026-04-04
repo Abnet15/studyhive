@@ -140,6 +140,7 @@ const InteractiveScene = ({ scene, onAnswer, selectedChoice }) => (
 const HoneyTeacher = () => {
   const [step, setStep] = useState('home');     // home | select-prof | loading | lesson
   const [topic, setTopic] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [professor, setProfessor] = useState(null);
   const [customMode, setCustomMode] = useState(false);
   const [customName, setCustomName] = useState('');
@@ -155,8 +156,9 @@ const HoneyTeacher = () => {
 
   const synthRef = useRef(window.speechSynthesis);
   const progressRef = useRef(null);
+  const cancelRef = useRef(false);
 
-  useEffect(() => () => { synthRef.current?.cancel(); clearInterval(progressRef.current); }, []);
+  useEffect(() => () => { synthRef.current?.cancel(); cancelRef.current = true; clearInterval(progressRef.current); }, []);
 
   const startLesson = async () => {
     if (!topic.trim()) return;
@@ -187,14 +189,15 @@ const HoneyTeacher = () => {
     const voices = synthRef.current.getVoices();
     const best = voices.find(v => (v.name.includes('Google') || v.name.includes('Microsoft')) && v.lang.startsWith('en'));
     if (best) u.voice = best;
-    u.onend = () => { setIsPlaying(false); onDone?.(); };
-    u.onerror = () => { setIsPlaying(false); onDone?.(); };
+    u.onend = () => { setIsPlaying(false); if (!cancelRef.current) onDone?.(); };
+    u.onerror = () => { setIsPlaying(false); if (!cancelRef.current) onDone?.(); };
     setIsPlaying(true);
     synthRef.current.speak(u);
   }, []);
 
   const playScene = useCallback((index) => {
     if (!data?.scenes || index >= data.scenes.length) { setIsPlaying(false); return; }
+    cancelRef.current = false;
     const scene = data.scenes[index];
     setCurrentSlide(index); setSelectedChoice(null); setWaitingForAnswer(false); setProgress(0);
     clearInterval(progressRef.current); setProfMood('speaking');
@@ -202,9 +205,10 @@ const HoneyTeacher = () => {
     let elapsed = 0;
     progressRef.current = setInterval(() => { elapsed += 100; setProgress(Math.min((elapsed / est) * 100, 97)); }, 100);
     speakText(scene.teacherScript, () => {
+      if (cancelRef.current) return;
       clearInterval(progressRef.current); setProgress(100);
       if (scene.type === 'interactive') { setProfMood('thinking'); setWaitingForAnswer(true); setIsPlaying(false); }
-      else { setProfMood('neutral'); setTimeout(() => { if (index + 1 < data.scenes.length) playScene(index + 1); }, 600); }
+      else { setProfMood('neutral'); setTimeout(() => { if (index + 1 < data.scenes.length && !cancelRef.current) playScene(index + 1); }, 600); }
     });
   }, [data, speakText]);
 
@@ -216,15 +220,15 @@ const HoneyTeacher = () => {
     });
   }, [currentSlide, data, speakText, playScene]);
 
-  const stopAll = () => { synthRef.current?.cancel(); clearInterval(progressRef.current); setIsPlaying(false); setProgress(0); setWaitingForAnswer(false); };
-  const restart = () => { stopAll(); setCurrentSlide(0); setSelectedChoice(null); setProfMood('neutral'); setTimeout(() => playScene(0), 80); };
+  const stopAll = () => { cancelRef.current = true; synthRef.current?.cancel(); clearInterval(progressRef.current); setIsPlaying(false); setProgress(0); setWaitingForAnswer(false); };
+  const restart = () => { stopAll(); cancelRef.current = false; setCurrentSlide(0); setSelectedChoice(null); setProfMood('neutral'); setTimeout(() => playScene(0), 80); };
   const reset = () => { stopAll(); setStep('home'); setData(null); setTopic(''); setProfessor(null); setCustomMode(false); };
 
   const profFaces = { neutral: professor?.emoji || '🧑‍🏫', correct: '🥳', wrong: '🤗', thinking: '🤔', speaking: professor?.emoji || '👨‍💼' };
 
   // ── HOME ──────────────────────────────────────────────────────────────────
   if (step === 'home' || step === 'select-prof') return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-white relative overflow-hidden flex flex-col">
+    <div className="min-h-[calc(100vh-80px)] mt-8 md:mt-12 bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-white relative overflow-hidden flex flex-col">
       <Particles icon="🐝" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.15),transparent_60%)] pointer-events-none" />
 
@@ -238,33 +242,54 @@ const HoneyTeacher = () => {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Honey Teacher</span>
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-xl max-w-xl mx-auto font-medium">
-              Your free AI professor. Pick any topic, choose an expert, and start an interactive animated lesson — instantly, no account needed.
+              Your personal AI professor. Pick any topic, choose an expert, and start an interactive animated lesson instantly.
             </p>
           </div>
 
-          {/* Topic input */}
-          <div className="space-y-3">
+          {/* Topic input with Autocomplete Dropdown */}
+          <div className="relative z-50">
             <div className="relative">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
               <input
                 value={topic} onChange={e => setTopic(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && topic.trim() && setStep('select-prof')}
-                placeholder="What do you want to learn today? (e.g. Python loops, How DNS works...)"
-                className="w-full pl-14 pr-6 py-5 rounded-2xl bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-600 text-lg focus:outline-none focus:border-indigo-500/50 focus:bg-slate-900/10 dark:bg-white/8 transition-all"
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                onKeyDown={e => { if (e.key === 'Enter' && topic.trim()) { setIsSearchFocused(false); setStep('select-prof'); } }}
+                placeholder="What do you want to learn today? (e.g. Python loops...)"
+                className="w-full pl-14 pr-6 py-5 rounded-2xl bg-white dark:bg-slate-900/40 backdrop-blur-md border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent shadow-lg transition-all relative z-20"
               />
             </div>
-            {/* Suggested topics - Filtered dynamically */}
-            <div className="flex flex-wrap gap-2">
-              {SUGGESTED_TOPICS.filter(t => t.toLowerCase().includes(topic.toLowerCase())).map(t => (
-                <button key={t} onClick={() => { setTopic(t); setStep('select-prof'); }}
-                  className="px-3 py-1.5 rounded-xl bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/8 text-slate-500 dark:text-slate-400 text-xs font-medium hover:bg-slate-900/10 dark:bg-white/10 hover:text-slate-900 dark:text-white hover:border-indigo-500/30 transition-all">{t}</button>
-              ))}
-              {topic.trim() && SUGGESTED_TOPICS.filter(t => t.toLowerCase().includes(topic.toLowerCase())).length === 0 && (
-                <div className="text-emerald-400 text-xs font-bold px-2 py-1 flex items-center gap-2">
-                  <Sparkles className="w-3 h-3" /> Unique topic detected! Press Enter to discover it.
-                </div>
+            
+            {/* Contextual Dropdown */}
+            <AnimatePresence>
+              {isSearchFocused && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute top-full left-0 right-0 mt-3 p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-10 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600"
+                >
+                  <div className="px-4 pt-3 pb-2 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                    {topic.trim() ? 'Matching Topics' : 'Popular Topics'}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    {SUGGESTED_TOPICS.filter(t => t.toLowerCase().includes(topic.toLowerCase())).map(t => (
+                      <button key={t} onClick={() => { setTopic(t); setIsSearchFocused(false); setStep('select-prof'); }}
+                        className="w-full text-left px-5 py-3.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-slate-200 text-[15px] font-medium transition-colors flex items-center justify-between group">
+                        {t}
+                        <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                      </button>
+                    ))}
+                    {topic.trim() && SUGGESTED_TOPICS.filter(t => t.toLowerCase().includes(topic.toLowerCase())).length === 0 && (
+                      <div className="px-5 py-4 text-emerald-600 dark:text-emerald-400 text-[15px] font-bold flex items-center gap-3 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl mt-1">
+                        <Sparkles className="w-5 h-5" /> Unique topic detected! Press Enter to start lesson.
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
               )}
-            </div>
+            </AnimatePresence>
           </div>
 
           {/* Professor grid */}
@@ -315,12 +340,11 @@ const HoneyTeacher = () => {
           </AnimatePresence>
 
           {!topic.trim() && (
-            <div className="text-center">
+            <div className="text-center mt-6">
               <motion.button whileHover={{ scale: 1.03 }} onClick={() => setStep('select-prof')}
-                className="px-10 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 font-bold text-lg transition-colors shadow-lg">
-                Start Learning Free →
+                className="px-8 py-3.5 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-[15px] transition-all shadow-xl shadow-slate-900/10 dark:shadow-white/10 border border-slate-700 dark:border-white/20 flex items-center gap-2 mx-auto">
+                Explore Professors <ChevronRight className="w-4 h-4" />
               </motion.button>
-              <p className="text-slate-700 text-sm mt-3">No account required. Instant AI lesson in seconds.</p>
             </div>
           )}
         </motion.div>
@@ -330,7 +354,7 @@ const HoneyTeacher = () => {
 
   // ── LOADING ───────────────────────────────────────────────────────────────
   if (step === 'loading') return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] flex flex-col items-center justify-center text-slate-900 dark:text-white gap-8">
+    <div className="min-h-[calc(100vh-80px)] mt-8 md:mt-12 bg-slate-50 dark:bg-[#020617] flex flex-col items-center justify-center text-slate-900 dark:text-white gap-8">
       <Particles icon={professor?.emoji || '🐝'} />
       <motion.div animate={{ rotate: 360 }} transition={{ duration: 3, repeat: Infinity, ease: 'linear' }} className="w-28 h-28 rounded-full border-t-4 border-indigo-500 flex items-center justify-center">
         <span className="text-5xl">{professor?.emoji || '🐝'}</span>
@@ -349,7 +373,7 @@ const HoneyTeacher = () => {
   const isInteractive = scene.type === 'interactive';
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-white flex flex-col overflow-hidden relative">
+    <div className="h-[calc(100vh-80px)] mt-2 md:mt-6 bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-white flex flex-col overflow-hidden relative mx-2 md:mx-6 mb-4 rounded-3xl border border-slate-200 dark:border-white/5 shadow-2xl">
       <Particles icon={scene.icon} />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(99,102,241,0.1),transparent_60%)] pointer-events-none" />
 
@@ -372,24 +396,30 @@ const HoneyTeacher = () => {
       {/* Body */}
       <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Left stage */}
-        <div className="flex-1 flex flex-col p-6 md:p-10 gap-5 overflow-y-auto">
-          <AnimatePresence mode="wait">
-            <motion.div key={currentSlide} initial={{ opacity: 0, y: 30, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -30 }} transition={{ duration: 0.5, type: 'spring', stiffness: 130 }}
-              className="rounded-[2.5rem] border border-slate-900/10 dark:border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-800/60 backdrop-blur-2xl overflow-hidden shadow-2xl">
-              <div className={`px-8 py-5 border-b border-slate-900/5 dark:border-white/5 flex items-center gap-4 ${isInteractive ? 'bg-amber-500/5' : ''}`}>
-                <motion.span className="text-4xl" animate={isPlaying ? { rotate: [0, 6, -6, 0] } : {}} transition={{ duration: 3, repeat: Infinity }}>{scene.icon || '💡'}</motion.span>
-                <div className="flex-1 min-w-0">
-                  <div className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${isInteractive ? 'text-amber-400' : 'text-indigo-400'}`}>Scene {currentSlide + 1} · {isInteractive ? '🎯 INTERACTIVE' : scene.animationType || 'concept'}</div>
-                  <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white truncate">{scene.title}</h2>
+        <div className="flex-1 flex flex-col p-4 md:p-8 gap-4 overflow-hidden relative items-center">
+          <div className="w-full flex-1 max-w-6xl flex flex-col min-h-0 relative">
+            <AnimatePresence mode="wait">
+              <motion.div key={currentSlide} initial={{ opacity: 0, y: 30, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -30 }} transition={{ duration: 0.5, type: 'spring', stiffness: 130 }}
+                className="w-full h-full flex flex-col rounded-[2rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-gradient-to-br dark:from-slate-900/90 dark:to-slate-800/60 backdrop-blur-2xl overflow-hidden shadow-2xl relative">
+                <div className={`shrink-0 px-6 py-4 border-b border-slate-100 dark:border-white/5 flex items-center gap-4 ${isInteractive ? 'bg-amber-500/5' : ''}`}>
+                  <motion.span className="text-3xl" animate={isPlaying ? { rotate: [0, 6, -6, 0] } : {}} transition={{ duration: 3, repeat: Infinity }}>{scene.icon || '💡'}</motion.span>
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${isInteractive ? 'text-amber-500 dark:text-amber-400' : 'text-indigo-500 dark:text-indigo-400'}`}>Scene {currentSlide + 1} · {isInteractive ? '🎯 INTERACTIVE' : scene.animationType || 'concept'}</div>
+                    <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white truncate">{scene.title}</h2>
+                  </div>
+                  {waitingForAnswer && (<motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1.5, repeat: Infinity }} className="px-3 py-1.5 rounded-xl bg-amber-100 dark:bg-amber-500/20 border border-amber-300 dark:border-amber-500/40 text-amber-700 dark:text-amber-300 text-xs font-black">YOUR TURN</motion.div>)}
                 </div>
-                {waitingForAnswer && (<motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1.5, repeat: Infinity }} className="px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-black">YOUR TURN</motion.div>)}
-              </div>
-              <div className="p-8 md:p-10">{isInteractive ? <InteractiveScene scene={scene} onAnswer={handleAnswer} selectedChoice={selectedChoice} /> : <SceneVisual scene={scene} isPlaying={isPlaying} />}</div>
-              <motion.div className={`h-[2px] bg-gradient-to-r ${isInteractive ? 'from-amber-500 via-orange-500 to-red-500' : 'from-indigo-500 via-purple-500 to-cyan-500'}`} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.4, duration: 0.8 }} style={{ transformOrigin: 'left' }} />
-            </motion.div>
-          </AnimatePresence>
-          <div>
-            <div className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-2 flex items-center gap-2"><Volume2 className="w-3 h-3" /> Live Script</div>
+                <div className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col justify-center items-center relative">
+                  <div className="w-full max-w-4xl mx-auto">
+                    {isInteractive ? <InteractiveScene scene={scene} onAnswer={handleAnswer} selectedChoice={selectedChoice} /> : <SceneVisual scene={scene} isPlaying={isPlaying} />}
+                  </div>
+                </div>
+                <motion.div className={`shrink-0 h-[3px] bg-gradient-to-r ${isInteractive ? 'from-amber-400 via-orange-500 to-red-500' : 'from-indigo-400 via-purple-500 to-cyan-400'}`} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.4, duration: 0.8 }} style={{ transformOrigin: 'left' }} />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+          <div className="shrink-0 w-full max-w-6xl">
+            <div className="text-[10px] text-slate-500 dark:text-slate-600 font-black uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Volume2 className="w-3.5 h-3.5" /> Live Script</div>
             <KaraokeSubtitle text={scene.teacherScript} isPlaying={isPlaying} slideKey={currentSlide} />
           </div>
         </div>
@@ -431,12 +461,12 @@ const HoneyTeacher = () => {
             ))}
           </div>
 
-          {/* CTA to sign up */}
-          <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-center">
-            <Sparkles className="w-5 h-5 text-indigo-400 mx-auto mb-2" />
-            <p className="text-xs font-bold text-slate-900 dark:text-white mb-0.5">Want to go deeper?</p>
-            <p className="text-[10px] text-slate-500 mb-3">Upload your own materials and get lessons built from your exact course notes.</p>
-            <a href="/register" className="block py-2 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-slate-900 dark:text-white text-xs font-bold transition-colors">Create Free Account →</a>
+          {/* CTA to sign up / deeper*/}
+          <div className="p-5 rounded-2xl bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 text-center">
+            <Sparkles className="w-6 h-6 text-indigo-500 mx-auto mb-3" />
+            <p className="text-sm font-bold text-slate-900 dark:text-white mb-1.5">Want to go deeper?</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Upload your own materials and get lessons built from your exact course notes.</p>
+            <a href="/upload" className="block py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-colors shadow-lg shadow-indigo-500/20">Go to Uploads →</a>
           </div>
         </div>
       </main>

@@ -7,7 +7,7 @@ import Badge from '../components/Badge';
 import { useBadges, isBadgeEarned } from '../hooks/useBadges';
 import { useMaterials } from '../context/MaterialContext';
 import { useCourses } from '../context/CourseContext';
-import { BookOpen, Star, Download, Sparkles, ChevronRight, Bot } from 'lucide-react';
+import { BookOpen, Star, Download, Sparkles, ChevronRight, Bot, Target, Flame } from 'lucide-react';
 import StudyPulse from '../components/StudyPulse';
 
 const Dashboard = () => {
@@ -27,6 +27,16 @@ const Dashboard = () => {
     ? (userMaterials.reduce((sum, m) => sum + (m.rating || 0), 0) / userMaterials.length).toFixed(1)
     : '0.0';
   const totalUploads = userMaterials.length;
+
+  // ── GAMIFICATION: Honey Drops & Dynamic Rank ──
+  const honeyDrops = (totalUploads * 150) + (totalDownloads * 25) + 450;
+  const getRank = (xp) => {
+    if (xp < 500) return 'Novice Bee';
+    if (xp < 1500) return 'Worker Bee';
+    if (xp < 3000) return 'Hive Mind';
+    return 'Master Scholar';
+  };
+  const currentRank = getRank(honeyDrops);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -64,28 +74,60 @@ const Dashboard = () => {
            </Link>
         </motion.header>
 
-        {/* ───── Stat Grid ───── */}
-        <motion.section variants={containerVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-           {[
-             { label: 'Total Uploads', value: totalUploads, icon: <BookOpen className="w-8 h-8"/>, color: 'from-blue-500 to-indigo-500', shadow: 'shadow-blue-500/20' },
-             { label: 'Avg Rating', value: avgRating, icon: <Star className="w-8 h-8"/>, color: 'from-fuchsia-500 to-purple-500', shadow: 'shadow-fuchsia-500/20' },
-             { label: 'Downloads', value: totalDownloads.toLocaleString(), icon: <Download className="w-8 h-8"/>, color: 'from-emerald-400 to-teal-500', shadow: 'shadow-emerald-500/20' },
-           ].map((stat, idx) => (
-             <motion.div variants={itemVariants} key={idx} className={`glass-card p-6 bg-white dark:bg-slate-900 transition-all duration-300 group hover:-translate-y-1 hover:shadow-2xl ${stat.shadow}`}>
-                <div className="flex justify-between items-start mb-6">
-                   <div className="space-y-2">
-                      <div className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px]">{stat.label}</div>
-                      <div className="text-4xl font-black text-slate-900 dark:text-white">{stat.value}</div>
-                   </div>
-                   <div className={`p-4 rounded-2xl bg-gradient-to-tr ${stat.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                      {stat.icon}
+        {/* ───── Gamified Bento Stat Grid ───── */}
+        <motion.section variants={containerVariants} className="grid grid-cols-1 md:grid-cols-4 gap-6">
+           
+           {/* Bento 1: Honey Drops (Spans 1) */}
+           <motion.div variants={itemVariants} className="glass-card p-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-none group hover:-translate-y-1 transition-all relative overflow-hidden flex flex-col justify-between">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 dark:bg-amber-500/5 blur-3xl rounded-full pointer-events-none"></div>
+              <div className="flex justify-between items-start mb-6 relative z-10 w-full">
+                 <div className="space-y-1">
+                    <div className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px]">Honey Drops (XP)</div>
+                    <div className="text-4xl font-black text-slate-900 dark:text-white drop-shadow-sm">{honeyDrops.toLocaleString()}</div>
+                 </div>
+                 <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-900/20 backdrop-blur-md group-hover:scale-110 group-hover:rotate-6 transition-transform shadow-sm"><Flame className="w-6 h-6 text-amber-500 dark:text-amber-400"/></div>
+              </div>
+              <div className="inline-flex items-center self-start gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-slate-800 rounded-full text-xs font-black shadow-sm border border-amber-100 dark:border-slate-700 relative z-10">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" /> <span className="text-slate-700 dark:text-slate-300">Rank: {currentRank}</span>
+              </div>
+           </motion.div>
+
+           {/* Bento 2: Exit Exam Readiness (Spans 1) */}
+           <motion.div variants={itemVariants} className="glass-card p-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-none group hover:-translate-y-1 transition-all">
+              <div className="flex justify-between items-start mb-6">
+                 <div className="space-y-1">
+                    <div className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px]">Exit Readiness</div>
+                    <div className="text-4xl font-black text-slate-900 dark:text-white">82<span className="text-xl text-slate-400 font-extrabold">%</span></div>
+                 </div>
+                 <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 group-hover:scale-110 transition-transform"><Target className="w-6 h-6"/></div>
+              </div>
+              <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                 <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 w-[82%] rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
+              </div>
+           </motion.div>
+
+           {/* Bento 3: Agentic Context Memory (Spans 2) */}
+           <motion.div variants={itemVariants} className="md:col-span-2 glass-card p-6 md:p-8 bg-slate-900 text-white relative overflow-hidden group hover:-translate-y-1 shadow-2xl shadow-indigo-500/20 transition-all border border-slate-800 flex items-center">
+              <div className="absolute -right-20 top-1/2 -translate-y-1/2 w-64 h-64 bg-primary-500/20 blur-[60px] rounded-full pointer-events-none"></div>
+              <div className="relative z-10 flex flex-col sm:flex-row gap-6 items-center w-full">
+                <div className="w-16 h-16 shrink-0 rounded-[1.5rem] bg-gradient-to-tr from-primary-500 to-fuchsia-500 flex items-center justify-center p-[2px] shadow-lg shadow-primary-500/30 group-hover:scale-105 transition-transform duration-500">
+                   <div className="w-full h-full bg-slate-900 rounded-[1.4rem] flex items-center justify-center relative overflow-hidden">
+                      <Bot className="w-8 h-8 text-primary-400 animate-pulse" />
                    </div>
                 </div>
-                <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                   <div className={`h-full bg-gradient-to-r ${stat.color} w-3/4 opacity-80 rounded-full`}></div>
+                <div className="flex-1 text-center sm:text-left">
+                  <h3 className="text-lg font-black flex items-center justify-center sm:justify-start gap-2 tracking-tight text-white mb-1.5">
+                    <Sparkles className="w-4 h-4 text-amber-400"/> Honey Agentic Insights
+                  </h3>
+                  <p className="text-slate-300 text-sm leading-relaxed mb-4 max-w-sm mx-auto sm:mx-0">
+                    I noticed you struggled with <span className="text-white font-bold underline decoration-primary-500 decoration-2 underline-offset-2">Data Structures</span> during your last Exit Exam Diagnostic. Ready to patch those knowledge gaps?
+                  </p>
+                  <Link to="/honey-teacher" className="inline-flex items-center gap-2 text-xs font-black px-5 py-2.5 bg-white/10 hover:bg-primary-500 border border-white/10 hover:border-primary-400 rounded-full transition-all active:scale-95 shadow-sm">
+                    Start Masterclass on Binary Heaps <ChevronRight className="w-4 h-4" />
+                  </Link>
                 </div>
-             </motion.div>
-           ))}
+              </div>
+           </motion.div>
         </motion.section>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -125,19 +167,34 @@ const Dashboard = () => {
           {/* ───── Right Column: Side Widgets ───── */}
           <div className="space-y-8">
              
-             {/* AI Quick Suggestion */}
-             <motion.div variants={itemVariants} className="glass-card p-8 bg-gradient-to-br from-slate-900 to-indigo-950 text-white border-none shadow-[0_20px_50px_-10px_rgba(14,165,233,0.4)] relative overflow-hidden">
-                <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary-500/30 rounded-full blur-3xl opacity-30"></div>
-                <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-md border border-white/20">
-                   <Sparkles className="w-7 h-7 text-primary-300" />
+             {/* Quick Stats Summary (Replaced Old AI Quick Suggestion) */}
+             <motion.div variants={itemVariants} className="glass-card p-6 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-6">
+                   <BookOpen className="w-5 h-5 text-indigo-500" /> Platform Impact
+                </h2>
+                <div className="space-y-5">
+                   <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                         <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center"><Download className="w-5 h-5"/></div>
+                         <div className="text-sm font-bold text-slate-700 dark:text-slate-300">Total Downloads</div>
+                      </div>
+                      <div className="text-lg font-black text-slate-900 dark:text-white">{totalDownloads.toLocaleString()}</div>
+                   </div>
+                   <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                         <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-500 flex items-center justify-center"><Star className="w-5 h-5"/></div>
+                         <div className="text-sm font-bold text-slate-700 dark:text-slate-300">Avg Rating</div>
+                      </div>
+                      <div className="text-lg font-black text-slate-900 dark:text-white">{avgRating}</div>
+                   </div>
+                   <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                         <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-500 flex items-center justify-center"><BookOpen className="w-5 h-5"/></div>
+                         <div className="text-sm font-bold text-slate-700 dark:text-slate-300">Materials Uploaded</div>
+                      </div>
+                      <div className="text-lg font-black text-slate-900 dark:text-white">{totalUploads}</div>
+                   </div>
                 </div>
-                <h3 className="text-2xl font-bold mb-3 tracking-tight">AI Insights</h3>
-                <p className="text-slate-300 text-sm leading-relaxed mb-8">
-                   Based on your profile, we suggests checking out the AI Summaries for <b className="text-white">{user?.dept || 'Computing'}</b> courses!
-                </p>
-                <Link to="/ai-assistant" className="flex items-center justify-center w-full py-4 bg-white text-slate-900 font-bold rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
-                   Generate Summary
-                </Link>
              </motion.div>
 
              {/* Study Pulse Heatmap */}
