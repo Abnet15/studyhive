@@ -5,95 +5,7 @@ import { apiClient } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
 import { Play, Pause, Sparkles, Video, X, SkipForward, RotateCcw, Volume2, CheckCircle, XCircle, Plus, ChevronRight } from 'lucide-react';
 
-// ─── Built-in Professor Personas ─────────────────────────────────────────────
-const BUILT_IN_PROFESSORS = [
-  { id: 'general',    name: 'Prof. Nova',      emoji: '🌟', tag: 'Universal Expert',    color: 'from-indigo-600/40 to-violet-600/40', border: 'border-indigo-500/40', desc: 'World-class generalist. Explains anything with vivid analogies and clear examples.' },
-  { id: 'python',     name: 'Dr. Pythia',      emoji: '🐍', tag: 'Python & Algorithms',  color: 'from-emerald-700/40 to-green-600/40', border: 'border-emerald-500/40', desc: 'Deep Python expertise—from basics to advanced OOP, data structures, and algorithm optimization.' },
-  { id: 'webdev',     name: 'Prof. Stack',     emoji: '🌐', tag: 'Full-Stack Web Dev',   color: 'from-blue-700/40 to-cyan-600/40',    border: 'border-blue-500/40',    desc: 'React, Node.js, APIs, HTML/CSS. Builds real projects as examples step by step.' },
-  { id: 'datascience',name: 'Dr. Insight',     emoji: '📊', tag: 'Data Science & ML',   color: 'from-orange-700/40 to-amber-600/40', border: 'border-orange-500/40',  desc: 'Statistics, pandas, numpy, scikit-learn, and neural networks explained intuitively.' },
-  { id: 'math',       name: 'Prof. Euler',     emoji: '∑',  tag: 'Mathematics',          color: 'from-pink-700/40 to-rose-600/40',    border: 'border-pink-500/40',    desc: 'Discrete math, calculus, linear algebra, and proofs—made visual and intuitive.' },
-  { id: 'ai',         name: 'Dr. Synapse',     emoji: '🤖', tag: 'AI & Deep Learning',  color: 'from-purple-700/40 to-fuchsia-600/40',border: 'border-purple-500/40', desc: 'CNNs, LLMs, transformers, training loops. Teaches AI from concept to implementation.' },
-  { id: 'java',       name: 'Prof. Brew',      emoji: '☕', tag: 'Java & OOP',           color: 'from-red-700/40 to-orange-600/40',   border: 'border-red-500/40',     desc: 'Java fundamentals, design patterns, Spring Boot, and enterprise-grade architecture.' },
-  { id: 'security',   name: 'Dr. Cipher',      emoji: '🔐', tag: 'Cybersecurity',        color: 'from-slate-700/40 to-zinc-600/40',   border: 'border-slate-500/40',   desc: 'Network security, cryptography, penetration testing basics, and defensive coding.' },
-];
 
-const TeacherSelector = ({ onSelect }) => {
-  const [selected, setSelected] = useState(null);
-  const [customMode, setCustomMode] = useState(false);
-  const [customName, setCustomName] = useState('');
-  const [customSpecialty, setCustomSpecialty] = useState('');
-  const [customDesc, setCustomDesc] = useState('');
-  const [duration, setDuration] = useState(5);
-
-  const handleStart = () => {
-    if (customMode) {
-      if (!customName.trim() || !customSpecialty.trim()) return;
-      onSelect({ id: 'custom', name: customName, emoji: '✨', tag: customSpecialty, desc: customDesc || `An expert in ${customSpecialty} who teaches everything deeply and clearly.`, duration });
-    } else if (selected) {
-      onSelect({ ...selected, duration });
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-white flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden transition-colors">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.15),transparent_60%)] pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(168,85,247,0.1),transparent_60%)] pointer-events-none" />
-
-      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-5xl z-10 transition-colors">
-        <div className="text-center mb-12">
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.1, type: 'spring' }} className="text-6xl mb-4">🎓</motion.div>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-3 text-slate-800 dark:text-white">
-            Choose Your <span className="gradient-text">Virtual Professor</span>
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-lg font-medium max-w-xl mx-auto">
-            Pick a persona to narrate and explain this document with deep domain expertise.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {BUILT_IN_PROFESSORS.map((prof, i) => (
-            <motion.button key={prof.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-              onClick={() => { setSelected(prof); setCustomMode(false); }}
-              className={`relative p-5 rounded-3xl border text-left transition-all group ${selected?.id === prof.id ? `bg-indigo-50 dark:bg-white/5 border-indigo-500 dark:border-indigo-400 shadow-xl scale-105` : 'bg-white dark:bg-white/3 border-slate-200 dark:border-white/8 hover:bg-slate-50 dark:hover:bg-white/6 hover:border-indigo-300 dark:hover:border-white/15'}`}
-            >
-              {selected?.id === prof.id && (
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-3 right-3 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center text-white">
-                  <CheckCircle className="w-3 h-3" />
-                </motion.div>
-              )}
-              <div className="text-4xl mb-3">{prof.emoji}</div>
-              <div className="font-black text-slate-900 dark:text-white text-sm mb-0.5">{prof.name}</div>
-              <div className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-2">{prof.tag}</div>
-              <div className="text-xs text-slate-500 leading-snug">{prof.desc}</div>
-            </motion.button>
-          ))}
-        </div>
-
-        {/* --- Duration Selector UI --- */}
-        <div className="mb-10 text-center">
-          <h3 className="text-xl font-bold mb-4 text-slate-700 dark:text-slate-300">Select Teaching Time</h3>
-          <div className="flex justify-center gap-3">
-            {[5, 10, 15].map(time => (
-               <button
-                 key={time}
-                 onClick={() => setDuration(time)}
-                 className={`px-6 py-3 rounded-2xl font-bold transition-all border ${duration === time ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30' : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10'}`}
-               >
-                 {time} Minutes
-               </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex justify-center">
-          <motion.button onClick={handleStart} disabled={!selected && !customMode} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="px-12 py-5 rounded-3xl bg-indigo-600 text-white font-black text-lg shadow-xl disabled:opacity-20 flex items-center gap-3">
-             <Play className="w-6 h-6"/> Start Synthesis
-          </motion.button>
-        </div>
-      </motion.div>
-    </div>
-  );
-};
 
 const Waveform = ({ isPlaying }) => (
   <div className="flex items-end gap-[2px] h-5">
@@ -306,8 +218,19 @@ const MasterclassPlayer = () => {
   };
 
   useEffect(() => {
+    // Auto-start the file masterclass with the best "Super Teacher" configuration and 15 minute depth
+    if (!professor && id && !loading) { 
+       handleProfessorSelect({ 
+         id: 'super_teacher', 
+         name: 'Super Teacher', 
+         emoji: '🦸‍♂️', 
+         tag: 'Master of Everything', 
+         desc: 'Teaches everything perfectly using deep, world-class analogies and concrete real-world examples.',
+         duration: 15 
+       }); 
+    }
     return () => { synthRef.current?.cancel(); clearInterval(progressRef.current); };
-  }, [id]);
+  }, [id, loading, professor]);
 
   const speakText = useCallback((text, onDone) => {
     if (!synthRef.current || !text) { onDone?.(); return; }
@@ -340,11 +263,6 @@ const MasterclassPlayer = () => {
       <p className="text-slate-500 dark:text-slate-400 max-w-sm font-bold text-lg">Synthesizing document into immersive scenes...</p>
     </div>
   );
-  // If no professor selected yet, show the selection screen
-  if (!professor && !loading) {
-    return <TeacherSelector onSelect={handleProfessorSelect} />;
-  }
-
   if (error || (!loading && !data?.scenes?.length)) return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#020617] flex items-center justify-center text-slate-900 dark:text-white transition-colors">
        <div className="text-center space-y-6 max-w-md p-10 bg-white dark:bg-white/5 rounded-[3rem] border border-slate-200 dark:border-white/10 shadow-2xl">
