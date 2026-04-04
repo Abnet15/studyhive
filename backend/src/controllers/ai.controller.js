@@ -87,11 +87,13 @@ exports.generateMasterclass = async (req, res, next) => {
     
     let resolvedTopic = topic;
     let contentSnippet = '';
+    let keyTerms = [];
 
     if (materialId && mongoose.Types.ObjectId.isValid(materialId)) {
       const material = await Material.findById(materialId);
       if (material) {
         resolvedTopic = material.title;
+        keyTerms = material.aiKeyTerms || [];
         if (material.fileUrl) {
            contentSnippet = await extractTextFromFile(material.fileUrl, material.originalName || '');
         }
@@ -100,7 +102,7 @@ exports.generateMasterclass = async (req, res, next) => {
 
     if (!resolvedTopic) throw new ApiError(400, 'Topic or valid materialId is required to generate a Masterclass lesson');
 
-    const data = await geminiService.generateMasterclass(resolvedTopic, contentSnippet, teacherPersona, duration);
+    const data = await geminiService.generateMasterclass(resolvedTopic, contentSnippet, teacherPersona, duration, keyTerms);
     res.json({ ...data, topic: resolvedTopic });
   } catch (err) {
     next(new ApiError(500, err.message));

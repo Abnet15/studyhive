@@ -226,15 +226,31 @@ class GeminiService {
     }
   }
 
-  async generateMasterclass(topic, fileContentSnippet = '', teacherPersona = null, duration = 5) {
+  async generateMasterclass(topic, fileContentSnippet = '', teacherPersona = null, duration = 5, keyTerms = []) {
     const textContext = fileContentSnippet ? `\nCRITICAL CONTEXT: Build this lesson ONLY around this text:\n"""\n${fileContentSnippet.substring(0, 40000)}\n"""\n` : '';
 
     // Build the professor identity block
     const defaultPersona = { name: 'Prof. Nova', tag: 'Universal Expert', desc: 'World-class generalist who explains everything with vivid analogies, real examples, and infectious enthusiasm.' };
     const prof = teacherPersona || defaultPersona;
     
-    // Determine pacing based on requested duration
-    const numScenes = duration >= 15 ? "15-20" : duration >= 10 ? "10-14" : "6-8";
+    // Determine pacing: scale scenes based on both duration AND number of key terms
+    const termCount = keyTerms.length || 0;
+    const minFromDuration = duration >= 15 ? 15 : duration >= 10 ? 10 : 6;
+    const minFromTerms = Math.max(6, Math.ceil(termCount * 0.8)); // ~1 scene per term
+    const sceneTarget = Math.max(minFromDuration, minFromTerms);
+    const numScenes = `${sceneTarget}-${sceneTarget + 4}`;
+
+    // Build mandatory curriculum from key terms
+    const curriculumBlock = keyTerms.length > 0 ? `
+    ═══════════════════════════════════════════════════════════════════
+    MANDATORY CURRICULUM — YOU MUST TEACH EVERY SINGLE ONE OF THESE:
+    ═══════════════════════════════════════════════════════════════════
+    ${keyTerms.map((t, i) => `${i + 1}. ${t}`).join('\n    ')}
+    
+    Each term above MUST be covered in at least one scene. Group related terms into the same scene if they are closely connected (e.g., "Promises" and "Callbacks" can share a scene, "Express" and "REST API" can share a scene).
+    Also add supplementary concepts that a student would NEED to understand these terms properly.
+    DO NOT skip any term. If there are 20 terms, you need enough scenes to cover all 20.
+    ` : '';
     
     const personaBlock = `
     YOUR IDENTITY — YOU ARE: ${prof.name} (${prof.tag})
@@ -254,6 +270,7 @@ class GeminiService {
     Topic: "${topic}"
     Duration target: ${duration} minutes of dense, rich teaching.
     
+    ${curriculumBlock}
     ${textContext}
     
     ═══════════════════════════════════════════════════════════════════
