@@ -156,19 +156,100 @@ const ProfessorAvatar = ({ isPlaying, mood, professor }) => {
 };
 
 const SceneVisual = ({ scene, isPlaying }) => {
-  if (scene?.animationType === 'code') return <div className="w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-[#0B1121] p-6 text-sm text-emerald-400 font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">{scene.codeSnippet}</div>;
-  const steps = scene?.visualSteps || [];
-  return (
-    <div className="flex flex-col gap-4">
-      {steps.map((s, i) => (
-        <motion.div key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.2 }}
-          className="flex items-center gap-4 p-5 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm">
-          <div className="text-3xl bg-slate-50 dark:bg-white/5 w-12 h-12 rounded-xl flex items-center justify-center shrink-0">{s.icon || '📌'}</div>
-          <div>
-            <div className="font-black text-slate-900 dark:text-white text-base">{s.label}</div>
-            <div className="text-slate-500 dark:text-slate-400 text-xs font-medium">{s.description}</div>
-          </div>
+  // ── CODE: Animated line-by-line code reveal ──
+  if (scene?.animationType === 'code') {
+    const lines = (scene.codeSnippet || '').split('\n');
+    return (
+      <div className="w-full rounded-2xl border border-emerald-500/20 bg-[#0B1121] p-6 text-sm font-mono overflow-x-auto shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+        {lines.map((line, i) => (
+          <motion.div key={i} initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.15, duration: 0.4 }}
+            className="text-emerald-400 leading-relaxed whitespace-pre-wrap">
+            <span className="text-slate-600 mr-3 select-none">{(i + 1).toString().padStart(2, ' ')}</span>{line}
+          </motion.div>
+        ))}
+      </div>
+    );
+  }
+
+  // ── COMPARISON: Side-by-side animated columns ──
+  if (scene?.animationType === 'comparison' && scene.comparisonLeft && scene.comparisonRight) {
+    return (
+      <div className="grid grid-cols-2 gap-4">
+        <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}
+          className="p-5 rounded-2xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20">
+          <div className="font-black text-blue-400 text-sm uppercase tracking-widest mb-3">{scene.comparisonLeft.label}</div>
+          {(scene.comparisonLeft.points || []).map((p, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.15 }}
+              className="flex items-start gap-2 mb-2">
+              <span className="text-blue-400 mt-0.5">▸</span>
+              <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">{p}</span>
+            </motion.div>
+          ))}
         </motion.div>
+        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.2 }}
+          className="p-5 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+          <div className="font-black text-purple-400 text-sm uppercase tracking-widest mb-3">{scene.comparisonRight.label}</div>
+          {(scene.comparisonRight.points || []).map((p, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + i * 0.15 }}
+              className="flex items-start gap-2 mb-2">
+              <span className="text-purple-400 mt-0.5">▸</span>
+              <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">{p}</span>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ── CONCEPT: Central idea with radiating facts ──
+  if (scene?.animationType === 'concept') {
+    const steps = scene?.visualSteps || [];
+    return (
+      <div className="relative">
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200 }}
+          className="text-center mb-6 p-6 rounded-3xl bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border border-indigo-500/20">
+          <div className="text-4xl mb-2">{scene.icon || '💡'}</div>
+          <div className="font-black text-lg text-slate-900 dark:text-white">{scene.title}</div>
+        </motion.div>
+        <div className="grid grid-cols-2 gap-3">
+          {steps.map((s, i) => (
+            <motion.div key={i} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3 + i * 0.15, type: 'spring' }}
+              className="flex items-start gap-3 p-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm">
+              <div className="text-2xl shrink-0">{s.icon || '📌'}</div>
+              <div>
+                <div className="font-bold text-slate-900 dark:text-white text-sm">{s.label}</div>
+                <div className="text-slate-500 dark:text-slate-400 text-xs">{s.description}</div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ── FLOW / BUILDUP: Animated step-by-step with connecting lines ──
+  const steps = scene?.visualSteps || [];
+  const isBuildup = scene?.animationType === 'buildup';
+  return (
+    <div className="flex flex-col gap-2">
+      {steps.map((s, i) => (
+        <div key={i}>
+          <motion.div initial={{ opacity: 0, x: isBuildup ? 0 : -25, y: isBuildup ? 20 : 0, scale: isBuildup ? 0.9 : 1 }}
+            animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+            transition={{ delay: i * 0.25, duration: 0.5, type: 'spring' }}
+            className="flex items-center gap-4 p-5 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="text-3xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-500/10 dark:to-purple-500/10 w-12 h-12 rounded-xl flex items-center justify-center shrink-0">{s.icon || '📌'}</div>
+            <div className="flex-1">
+              <div className="font-black text-slate-900 dark:text-white text-base">{s.label}</div>
+              <div className="text-slate-500 dark:text-slate-400 text-xs font-medium leading-relaxed">{s.description}</div>
+            </div>
+            {!isBuildup && i < steps.length - 1 && <span className="text-indigo-400 text-lg shrink-0">→</span>}
+          </motion.div>
+          {isBuildup && i < steps.length - 1 && (
+            <motion.div initial={{ scaleY: 0 }} animate={{ scaleY: 1 }} transition={{ delay: i * 0.25 + 0.15 }}
+              className="w-0.5 h-4 bg-gradient-to-b from-indigo-400 to-purple-400 mx-auto rounded-full" />
+          )}
+        </div>
       ))}
     </div>
   );

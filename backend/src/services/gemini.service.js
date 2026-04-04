@@ -249,58 +249,82 @@ class GeminiService {
     
     const prompt = `${personaBlock}
     
-    You are the world's BEST interactive teacher in your domain. Teach with energy, precision, and real concrete examples.
-    Create a ${numScenes} scene interactive animated masterclass lesson about: "${topic}".
-    This lesson is designed to perfectly fill ${duration} minutes of continuous teaching. Scale the depth and detail accordingly.
+    You are the world's GREATEST interactive teacher — imagine the energy of the best TED Talk combined with the depth of an MIT lecture.
+    Your job is to create a ${numScenes} scene interactive animated masterclass that teaches EVERY CORE CONCEPT in deep detail.
+    Topic: "${topic}"
+    Duration target: ${duration} minutes of dense, rich teaching.
+    
     ${textContext}
     
-    SCENE TYPES — USE "interactive" at least TWICE (spread throughout):
-    - "flow": Step-by-step pipeline with animated arrows. Use for processes, algorithms.
-    - "buildup": Stacking concepts. Use for definitions, layers, hierarchy.
-    - "comparison": Side-by-side contrast. Use for A vs B, pros/cons.
-    - "code": Animated code reveal. Use for syntax, formulas, commands.
-    - "concept": Central idea with radiating facts. Use for overviews.
-    - "interactive": Teacher PAUSES, asks a question, student picks answer, teacher gives personalized spoken feedback.
+    ═══════════════════════════════════════════════════════════════════
+    ABSOLUTE RULES — VIOLATION = FAILURE:
+    ═══════════════════════════════════════════════════════════════════
     
-    Return STRICT JSON (no markdown, no code blocks):
+    1. TEACH THE ACTUAL CONTENT — NOT META-INFORMATION.
+       ❌ NEVER generate scenes about: "file structure", "PDF bytes", "data types", "user requests", "how the system works", "recognizing formats".
+       ✅ ONLY generate scenes that teach the REAL SUBJECT MATTER from the provided text.
+       If the topic is "Node.js", teach event loops, modules, Express, streams, buffers, async/await, etc.
+       If the topic is "React", teach components, hooks, state, props, JSX, virtual DOM, etc.
+       
+    2. DEPTH — Teach like the world's best professor:
+       - Each teacherScript MUST be 5-8 rich sentences with real-world analogies, concrete examples, and "aha moment" explanations.
+       - Explain the WHY behind every concept, not just the WHAT.
+       - Use vivid metaphors: "Think of the event loop like a waiter in a restaurant — it takes orders, sends them to the kitchen, and serves other tables while waiting..."
+       
+    3. COVERAGE — Cover ALL major topics from the provided content:
+       - Extract every distinct concept, technique, and principle mentioned in the file content.
+       - Organize them into a logical learning progression: fundamentals first, advanced concepts later.
+       - Each scene = one major concept taught thoroughly.
+       
+    4. ANIMATION VARIETY — Use ALL types for visual richness:
+       - "flow": Step-by-step process with animated arrows (algorithms, lifecycles, pipelines)
+       - "buildup": Stacking/layering concepts (definitions, architecture layers)
+       - "comparison": Side-by-side A vs B (pros/cons, old vs new, sync vs async)
+       - "code": Animated code reveal with syntax highlighting (actual working code examples)
+       - "concept": Central idea with radiating facts (overviews, core principles)
+       - "interactive": Quiz pause — teacher asks, student picks, teacher gives spoken feedback
+       USE "interactive" at least 2 times, spread throughout the lesson (NOT at the end).
+       
+    5. TEACHER PERSONALITY — Be unforgettable:
+       - Start scenes with hooks: "Here is what blew my mind when I first learned this..."
+       - Use dramatic reveals: "And THIS is the secret sauce that makes it all work..."
+       - Show genuine excitement: "I absolutely LOVE this concept because..."
+       - Connect to real industry: "At Google, they use this exact pattern to handle..."
+
+    Return STRICT JSON (no markdown, no code blocks, no commentary):
     {
       "youtubeQuery": "targeted YouTube search for this specific topic",
       "scenes": [
         {
           "type": "teaching",
-          "teacherScript": "Enthusiastic spoken script in YOUR expert voice with real examples from your domain. 2-3 sentences.",
-          "title": "Scene title",
-          "icon": "emoji",
-          "animationType": "flow",
+          "teacherScript": "5-8 sentence passionate, deep explanation with analogies and real examples. Speak like a world-class lecturer.",
+          "title": "Descriptive Scene Title About The Actual Concept",
+          "icon": "relevant emoji",
+          "animationType": "flow|buildup|comparison|code|concept",
           "visualSteps": [
-            { "label": "Step", "icon": "emoji", "description": "brief" }
+            { "label": "Key Point Name", "icon": "emoji", "description": "1-2 sentence explanation of this specific point" }
           ],
-          "codeSnippet": "only if animationType is code",
-          "comparisonLeft": { "label": "Left", "points": ["point"] },
-          "comparisonRight": { "label": "Right", "points": ["point"] }
+          "codeSnippet": "actual working code example (only if animationType is code)",
+          "comparisonLeft": { "label": "Side A", "points": ["point1", "point2", "point3"] },
+          "comparisonRight": { "label": "Side B", "points": ["point1", "point2", "point3"] }
         },
         {
           "type": "interactive",
-          "teacherScript": "Alright! Let me put your understanding to the test. Here is a real-world question from this topic...",
+          "teacherScript": "Engaging setup for the quiz question, connecting it to what was just taught. 3-4 sentences.",
           "title": "Knowledge Check 🎯",
           "icon": "🤔",
-          "question": "A specific, practical question about what was just taught",
+          "question": "A specific, practical question testing real understanding of the concept just taught",
           "choices": [
-            { "text": "Option A", "isCorrect": false, "teacherResponse": "Warm, encouraging explanation why this is wrong. Real-world context. 2 sentences." },
-            { "text": "Option B (correct)", "isCorrect": true, "teacherResponse": "Enthusiastic confirmation! Reinforce with a real-world example. 2 sentences." },
-            { "text": "Option C", "isCorrect": false, "teacherResponse": "Good instinct but here is the key distinction. 2 sentences." },
-            { "text": "Option D", "isCorrect": false, "teacherResponse": "Common misconception! Here is the correct mental model. 2 sentences." }
+            { "text": "Option A", "isCorrect": false, "teacherResponse": "Warm explanation why wrong + what the correct mental model is. 2-3 sentences." },
+            { "text": "Option B (correct)", "isCorrect": true, "teacherResponse": "Enthusiastic confirmation with bonus insight or real-world example. 2-3 sentences." },
+            { "text": "Option C", "isCorrect": false, "teacherResponse": "Good thinking but here is the key distinction most people miss. 2-3 sentences." },
+            { "text": "Option D", "isCorrect": false, "teacherResponse": "Classic misconception! Here is the right way to think about it. 2-3 sentences." }
           ]
         }
       ]
     }
     
-    RULES:
-    - Persona is EVERYTHING — every example must fit your domain (e.g., Python prof uses Python, Math prof uses equations)
-    - Use "interactive" scenes at least 2x, NOT at the end only
-    - Every teaching scene needs visualSteps (3-4 items) unless it is code/comparison type
-    - Speak like an excited human in teacherScript: "Here is the wild part...", "Think of it this way...", "I love this bit..."
-    - ALL factual content must come from the provided context text`;
+    FINAL CHECK: Every single scene title and teacherScript must be about the ACTUAL SUBJECT (${topic}), NOT about files, PDFs, uploads, data types, or system processing.`;
 
     try {
       const text = await this.runWithFallback(prompt, true);
