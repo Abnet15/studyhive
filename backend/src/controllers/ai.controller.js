@@ -109,7 +109,7 @@ exports.generateMasterclass = async (req, res, next) => {
 
 exports.voiceChat = async (req, res, next) => {
   try {
-    const { mode, context, history } = req.body;
+    const { mode, context, history, language } = req.body;
     
     if (!mode) throw new ApiError(400, 'Mode is required (interview or english)');
 
@@ -130,7 +130,7 @@ exports.voiceChat = async (req, res, next) => {
       catch (e) { parsedHistory = history; } // if it's already an array
     }
 
-    const data = await geminiService.voiceConversation(mode, resolvedContext, parsedHistory);
+    const data = await geminiService.voiceConversation(mode, resolvedContext, parsedHistory, language || 'en');
     res.json(data);
   } catch (err) {
     next(new ApiError(500, err.message));

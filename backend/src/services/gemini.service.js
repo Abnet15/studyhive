@@ -278,11 +278,15 @@ class GeminiService {
     }
   }
 
-  async voiceConversation(mode, contextText, history) {
+  async voiceConversation(mode, contextText, history, language = 'English') {
     let systemInstruction = "";
 
+    const amharicRule = language === 'Amharic' || language.includes('Amharic') || language === 'am' ? 
+      "CRITICAL: You are an Ethiopian native. You MUST speak completely in native Amharic (አማርኛ). NEVER output english letters. NEVER output English greetings like 'Hello'. Write idiomatically and naturally like an Ethiopian." : 
+      `CRITICAL: Provide all responses strictly and exactly in ${language}.`;
+
     if (mode === 'interview') {
-      systemInstruction = `You are an expert HR recruiter conducting a professional job interview.
+      systemInstruction = `You are an expert HR recruiter conducting a professional job interview. ${amharicRule}
 CONTEXT ABOUT THE JOB OR CANDIDATE:
 """
 ${contextText || 'General Job Interview'}
@@ -291,10 +295,10 @@ Your goals:
 1. Ask behavioral and technical questions relevant to the context.
 2. Listen to the user's response, evaluate it, and ask follow-up questions organically.
 3. Keep your responses concise (1-3 sentences max) because this is a real-time voice call. Do not use markdown like asterisks or bold text, just plain conversational text.
-4. IMPORTANT LANGUAGE RULE: You MUST speak in the exact language the user requests in their CONTEXT block. If they request Amharic, you MUST output pure Amharic script (አማርኛ) and speak idiomatically like a native Ethiopian interviewer. Do not use English phrases if Amharic is requested.
+4. IMPORTANT LANGUAGE RULE: ${amharicRule}
 5. If they ask you for feedback, give them constructive feedback on their performance.`;
     } else {
-      systemInstruction = `You are a friendly, native English-speaking conversation partner helping the user practice their English fluency and conversational skills.
+      systemInstruction = `You are a friendly conversation partner helping the user practice fluency. ${amharicRule}
 USER LEARNING GOALS/CONTEXT:
 """
 ${contextText || 'General English Practice'}
@@ -310,9 +314,11 @@ Your goals:
     const formattedHistory = [];
     
     // Inject system instruction in the first interaction
+    let initMsg = `SYSTEM INSTRUCTION: ${systemInstruction}\n\nWe are now starting the voice conversation. Please say hello in ${language === 'Amharic' ? 'Amharic (like ሰላም)' : language}.`;
+    
     formattedHistory.push({
       role: 'user',
-      parts: [{ text: `SYSTEM INSTRUCTION: ${systemInstruction}\n\nWe are now starting the voice conversation. Please say hello.` }]
+      parts: [{ text: initMsg }]
     });
 
     if (history && history.length > 0) {
