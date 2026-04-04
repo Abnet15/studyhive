@@ -3,7 +3,7 @@
 
   # StudyHive 🐝
   
-  **Transforming static University materials into an interactive, voice-driven AI Knowledge Base.**
+  **The AI-Powered University Knowledge Platform That Turns Static Documents Into Interactive, Animated Learning Experiences.**
 
   [![React](https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://reactjs.org/)
   [![Node.js](https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
@@ -20,58 +20,75 @@
 
 ## 🚀 The Problem
 
-Modern university portals and student group chats are suffering from the **"Google Drive Problem."** Students upload thousands of static lecture slides, PDFs, and generic documents. Finding specific information requires opening every single file. There is no interactivity, no guidance, and no mathematical mapping between files. Learning from long academic texts is isolating, boring, and highly inefficient.
+University students drown in thousands of static PDFs, lecture slides, and documents scattered across Google Drive and Telegram groups. Finding specific information means opening every file manually. There is **zero interactivity**, no intelligent guidance, and no way to truly *learn* from these materials — just passive reading.
 
 ## 💡 The Solution
 
-**StudyHive** is not just another file repository — it is a **Smart Knowledge Hub**.
+**StudyHive** transforms every uploaded document into a **living, interactive AI-powered learning experience**.
 
-Powered by **Honey AI** (our highly customized Google Gemini 2.5 generative engine), StudyHive reads, understands, and semantically indexes every document uploaded. It organically converts static slides and dense PDFs into gamified achievements, native-speaking voice interviewers, AI-powered exit exam simulators, and animated virtual masterclasses.
+Powered by **Honey AI** — our deeply customized Google Gemini 2.5 generative engine — StudyHive doesn't just store files. It **reads**, **understands**, and **teaches** them. Upload a dense 200-page PDF and within seconds, Honey AI extracts every concept, generates quizzes, builds animated masterclasses with virtual professors, simulates job interviews using the content, and maps your learning progress — all automatically.
 
 ---
 
 ## 🌟 Core AI-Powered Features
 
-### 1. 🎤 Honey Interviewer — Voice-to-Voice AI Simulation
-A fully real-time **Voice-to-Voice AI Loop** that acts as your personal recruiter or conversation partner:
+### 1. 🎬 Honey Teacher — Cinematic AI Masterclass Engine
+
+The crown jewel of StudyHive. Click **Start Masterclass** on any uploaded material and it transforms into a fully animated, interactive lesson taught by a virtual AI professor:
+
+- **8 Expert Professor Personas** — Choose from Prof. Stack (Web Dev), Dr. Pythia (Python), Prof. Sigma (Data Science), Dr. Euler (Mathematics), Dr. Synapse (AI/ML), Prof. Brew (Java), Dr. Cipher (Cybersecurity), or create your own custom professor with any specialty.
+- **Mandatory Curriculum Coverage** — The AI reads ALL extracted key terms from the document and is **forced** to teach every single one. A material with 20 terms like "Node.js, Express, MongoDB, JWT, Bcrypt" will generate enough scenes to deeply cover all 20 concepts.
+- **Dynamic Teaching Duration** — Students select 5, 10, or 15 minutes of teaching time. The AI dynamically scales the lesson depth and number of scenes accordingly (6-8 scenes for 5 min, up to 20+ scenes for 15 min).
+- **5-Engine Animation System** — Each scene uses the optimal visual layout:
+  - 🔄 **Flow Pipeline** — Step-by-step processes with animated arrows
+  - 🧱 **Buildup Foundation** — Stacking concept layers with gradient connectors
+  - ⚖️ **Comparative Analysis** — Side-by-side dual-column comparison with color-coded points
+  - 💻 **Code Snippet Window** — Line-by-line animated code reveal with syntax highlighting and line numbers
+  - 💡 **Radiating Concept Hub** — Central idea with spring-animated fact cards in a 2-column grid
+- **Audio Narration + Karaoke Subtitles** — The professor speaks each script aloud via browser TTS. Glowing karaoke-style subtitles highlight each word in real-time. Audio waveforms pulse to the voice.
+- **Interactive Knowledge Checks** — The professor pauses mid-lesson to quiz the student with 4 multiple-choice options. Each answer triggers unique spoken feedback explaining why it's right or wrong.
+- **Deep, World-Class Teaching** — Each scene's script is 5-8 sentences long with real-world analogies, industry references, and "aha moment" explanations — engineered to match the quality of the best TED Talks.
+
+### 2. 🎤 Honey Interviewer — Voice-to-Voice AI Simulation
+
+A fully real-time **Voice-to-Voice AI Loop** for interview preparation and language practice:
+
 - **Real-time Speech Recognition** — Speak naturally via your microphone; the system transcribes and feeds context to Honey AI instantly.
-- **Multi-lingual Output (5 Languages)** — English, **Amharic (አማርኛ)**, French, Spanish, and German. We engineered "Elite Mode" prompt architectures to mandate idiomatically perfect native speech, mapped to regional Web Speech TTS voices.
-- **Two Modes** — *Job Interview Prep* (upload a Job Description and the AI morphs into the Hiring Manager) and *English Practice* (casual conversational AI partner with grammar feedback).
+- **Multi-lingual Output (5 Languages)** — English, **Amharic (አማርኛ)**, French, Spanish, and German with "Elite Mode" prompt architectures for idiomatically perfect native speech.
+- **Two Modes** — *Job Interview Prep* (upload a Job Description and the AI becomes the Hiring Manager) and *English Practice* (conversational AI partner with grammar feedback).
 - **Context-Aware File Memory** — Upload `.pdf`, `.docx`, or `.pptx` files and the AI reads and uses them as interview context.
 
-### 2. 🎬 Honey Teacher — Cinematic AI Masterclass
-Click **Start Masterclass** and the document is transformed into a fully cinematic lesson:
-- **Audio Synthesis** — A custom script is spoken out loud by browser TTS with adjustable speed and voice selection.
-- **5-Engine Animation System** — The AI picks the best visual layout per concept: **Flow Pipeline** (arrows), **Buildup Foundation** (stacking blocks), **Comparative Analysis** (dual columns), **Code Snippet Window**, or **Radiating Concept Hub**.
-- **Karaoke Subtitles & Waveforms** — Audio waveforms pulse to the voice. Glowing subtitles highlight the spoken words in real-time.
-- **Interactive Knowledge Checks** — The teacher pauses mid-lesson to quiz the student with immediate spoken feedback.
-- **6 Built-in Professor Personas** — Pick from Python Expert, Web Dev Guru, Data Scientist, Math Wizard, AI Researcher, or Universal Expert. Each persona affects teaching style, analogies, and code examples.
+### 3. 🎓 Exit Exam Preparation Hub
 
-### 3. 🎓 Exit Exam Preparation Hub *(NEW)*
 A comprehensive AI-powered diagnostic exam simulator designed for **Ethiopian university exit exams (MoE)**:
-- **12 University Departments** — Computer Science, Software Engineering, IT, Electrical Engineering, Medicine, Law, and more.
-- **AI-Generated Diagnostic** — Honey AI builds a structured exam covering 4-6 core competencies per department with 15+ multiple-choice questions.
-- **Timed Test Engine** — Full-screen, distraction-free exam environment with a live countdown timer, instant correct/wrong feedback, and detailed explanations for every answer.
-- **Recharts Radar Chart Results** — A beautiful interactive radar chart visually maps competency strengths and weaknesses. Animated progress bars and letter grades per subject area.
-- **Score Persistence** — Results are saved to MongoDB for historical tracking.
 
-### 4. 🛡️ AI Quality Gate — Content Validation Engine
-StudyHive completely eliminates platform spam:
-- During upload, Honey AI extracts raw binary text from **PDFs** (`pdf-parse`), **DOCX** (`mammoth`), and **PPTX** (`officeparser`) files.
-- The AI mathematically analyzes the content. Empty, corrupted, or irrelevant files are **instantly rejected** before entering the database.
-- All uploaded materials receive AI-generated **summaries**, **key topics**, and **difficulty ratings** stored as searchable metadata.
+- **12 University Departments** — Computer Science, Software Engineering, IT, Electrical Engineering, Medicine, Law, and more.
+- **AI-Generated Diagnostics** — Honey AI builds structured exams covering 4-6 core competencies per department with 15+ multiple-choice questions.
+- **Timed Test Engine** — Full-screen, distraction-free environment with countdown timer, instant feedback, and detailed explanations.
+- **Recharts Radar Chart Results** — Interactive radar chart mapping competency strengths and weaknesses with animated progress bars and letter grades.
+- **Score Persistence** — Results saved to MongoDB for historical tracking.
+
+### 4. 🛡️ AI Quality Gate — Intelligent Content Validation
+
+StudyHive ensures only meaningful content enters the platform:
+
+- **Triple-Layer Text Extraction** — Extracts text via `pdf-parse` (PDF), `mammoth` (DOCX), and `officeparser` (PPTX/PPT).
+- **Gemini Vision OCR Fallback** — If standard extraction returns empty (scanned PDFs, image-based documents), StudyHive sends the raw file bytes to **Gemini's multimodal vision model** to read the visual content. Supports PNG, JPG, WebP, and scanned PDFs.
+- **Strict Empty File Rejection** — Files with absolutely no readable content (even after Vision OCR) are rejected with a clear error — they never enter the database.
+- **Archive Bypass** — `.zip`, `.rar`, `.tar`, `.gz` files are allowed through without text extraction since they are compressed containers.
+- **Auto-Generated Metadata** — Every uploaded material receives AI-generated summaries, key terms, topic tags, and content-derived quizzes.
 
 ### 5. 📝 Content-Derived AI Quizzes
+
 Zero hallucinations guaranteed:
+
 - Honey AI's strict prompt architecture generates multiple-choice quizzes mapped **1:1 against the raw extracted file text**.
-- If the document doesn't explicitly state the answer, the AI cannot ask the question.
+- A hallucination guard filters out any system-referencing or meta-questions.
 - Students receive instant scoring with detailed explanations.
 
 ### 6. 🧭 Hyper-Personalized Learning Pathways
-The **AI Assistant Console** doesn't just guess what you want:
-- It securely scans your MongoDB **Bookmarks** and **Recent Materials**.
-- It extracts the underlying academic topics you've been focusing on.
-- It structures a highly specific, tailored learning pathway unique to your current curriculum.
+
+The **AI Assistant Console** securely scans your MongoDB bookmarks and recent materials, extracts the underlying academic topics you've been focusing on, and structures a highly specific, tailored learning pathway unique to your current curriculum.
 
 ---
 
@@ -85,49 +102,41 @@ The **AI Assistant Console** doesn't just guess what you want:
 ### 📊 Student Dashboard
 - **Real-time Statistics** — Total uploads, average rating, download count with animated counters.
 - **Study Pulse Heatmap** — GitHub-style contribution graph showing daily academic activity.
-- **Top Achievements System** — Earn gamified badges ("First Upload", "Scholar", "Helpful Contributor") with premium Framer Motion animations and unlock indicators.
-- **Course Navigator** — Quick-access sidebar to jump into active courses.
+- **Top Achievements System** — Gamified badges ("First Upload", "Scholar", "Helpful Contributor") with premium Framer Motion animations.
 - **AI Insights Widget** — Personalized recommendations powered by Honey AI.
 
 ### 🔍 Global Command-K Search
 - A **lightning-fast, keyboard-driven search palette** (⌘K / Ctrl+K).
 - Instantly searches across courses, topics, and specific academic materials.
-- Filterable by material type, course, department.
 
 ### 📖 Course & Material Explorer
 - **Department-based Organization** — Materials grouped by university departments and courses.
 - **Rich Material Cards** — Download count, star ratings, file type badges, uploader info.
 - **Bookmark System** — Save materials for later; bookmarks feed into AI personalization.
-- **Rating & Review System** — 5-star ratings with written reviews on every material.
+- **Rating & Review System** — 5-star ratings on every material.
 - **One-click Download** with Cloudinary-powered secure file serving.
 
 ### 📤 Smart Upload System
 - **Drag & Drop Upload** with real-time progress indicators.
-- Supports **PDF, DOCX, PPTX, PPT, TXT** files.
-- **AI-Powered Auto-Tagging** — Honey AI extracts summary, key terms, difficulty level, and topic tags automatically.
-- **Cloudinary Integration** — Files are securely stored in the cloud with optimized delivery.
+- **10MB File Size Limit** with client-side validation and clear error messaging.
+- Supports **PDF, DOCX, PPTX, PPT, TXT** and image files.
+- **AI-Powered Auto-Tagging** — Honey AI extracts summary, key terms, and topic tags automatically.
+- **Cloudinary Integration** — Files securely stored in the cloud.
 
 ### 👤 User Profile & Settings
 - **Editable Profile** — Name, department, academic year, bio with avatar.
-- **Upload History** with performance analytics.
-- **Appearance Settings** — Dark/Light mode toggle with smooth Framer Motion transitions.
+- **Appearance Settings** — Dark/Light mode toggle with smooth transitions.
 - **Account Management** — Password change, notification preferences.
 
 ### 🛡️ Admin Portal
 - **Content Moderation Dashboard** — Review, approve, or reject uploaded materials.
-- **User Management** — View all registered users, manage roles.
-- **System Announcements Engine** — Broadcast real-time push notifications with priority levels (info, warning, critical) to targeted users.
+- **User Management** — View registered users, manage roles.
+- **System Announcements Engine** — Broadcast push notifications with priority levels to targeted users.
 - **Platform Analytics** — Upload stats, user engagement metrics.
 
 ### 🌙 Responsive Dark/Light Theming
-- Full application-wide theme support using Tailwind CSS dark mode utilities.
-- Seamless transitions with persistent user preference storage.
-- Every page (including immersive Honey Studio pages) adapts perfectly to both themes.
-
-### 🏠 Landing Page
-- **Premium marketing page** with animated hero section, feature showcases, and social proof.
-- Smooth scroll animations powered by Framer Motion.
-- Mobile-responsive design.
+- Full application-wide theme support with persistent user preference storage.
+- Every page adapts perfectly to both themes with smooth Framer Motion transitions.
 
 ---
 
@@ -137,21 +146,22 @@ The **AI Assistant Console** doesn't just guess what you want:
 | Technology | Purpose |
 |---|---|
 | **React.js 18** | Component-based SPA architecture |
-| **Framer Motion** | Cinematic physics-based animations |
+| **Framer Motion** | Cinematic physics-based animations (spring, stagger, layout) |
 | **Tailwind CSS v3** | Utility-first styling with dark/light theming |
 | **TanStack React Query** | Server state management & optimistic updates |
 | **Recharts** | Radar charts for Exit Exam analytics |
 | **React Router v7** | Client-side navigation & protected routes |
 | **Lucide React** | High-fidelity vector icon system |
-| **Web Speech API** | Browser-native STT (Speech Recognition) & TTS (Speech Synthesis) |
+| **Web Speech API** | Browser-native STT & TTS for voice features |
 
 ### Backend
 | Technology | Purpose |
 |---|---|
 | **Node.js & Express** | RESTful API server |
-| **Google Gemini SDK** | Generative AI engine (`gemini-2.5-flash`) |
+| **Google Gemini SDK** | Generative AI engine (`gemini-2.5-flash` with automatic fallback hierarchy) |
+| **Gemini Vision** | Multimodal OCR for scanned documents and images |
 | **Mongoose & MongoDB** | NoSQL data persistence with compound text indexes |
-| **Cloudinary + Multer** | Cloud file storage with multipart form uploads |
+| **Cloudinary + Multer** | Cloud file storage with 10MB limit enforcement |
 | **PDF-Parse** | PDF binary text extraction |
 | **Mammoth** | DOCX binary text extraction |
 | **OfficeParser** | PPTX/PPT binary text extraction |
@@ -165,25 +175,22 @@ The **AI Assistant Console** doesn't just guess what you want:
 studyhive/
 ├── frontend/                    # React SPA
 │   ├── src/
-│   │   ├── pages/               # 16 full pages
+│   │   ├── pages/               # 16+ full pages
 │   │   │   ├── Landing.jsx          # Marketing landing page
 │   │   │   ├── Dashboard.jsx        # Student dashboard with widgets
 │   │   │   ├── CourseExplorer.jsx    # Course & material browser
-│   │   │   ├── MaterialDetail.jsx   # Individual material view + reviews
-│   │   │   ├── AIAssistant.jsx      # Honey AI console (quizzes, analysis, chat)
-│   │   │   ├── HoneyTeacher.jsx     # AI Masterclass setup
-│   │   │   ├── MasterclassPlayer.jsx# Cinematic lesson player
+│   │   │   ├── MaterialDetail.jsx   # Material view + reviews + AI tabs
+│   │   │   ├── AIAssistant.jsx      # Honey AI console
+│   │   │   ├── HoneyTeacher.jsx     # AI Masterclass (topic-based)
+│   │   │   ├── MasterclassPlayer.jsx# Cinematic lesson player (file-based)
 │   │   │   ├── HoneyInterviewer.jsx # Voice interview simulator
 │   │   │   ├── ExitExamHub.jsx      # Exit exam diagnostic engine
 │   │   │   ├── Admin.jsx            # Admin moderation portal
 │   │   │   ├── Profile.jsx          # User profile page
-│   │   │   ├── Settings.jsx         # User preferences
-│   │   │   └── ...
-│   │   ├── components/          # 10 reusable components
-│   │   │   ├── Navbar.jsx           # Global navigation with AI dropdown
+│   │   │   └── Settings.jsx         # User preferences
+│   │   ├── components/          # 10+ reusable components
+│   │   │   ├── Navbar.jsx           # Global navigation
 │   │   │   ├── GlobalSearch.jsx     # Command-K search palette
-│   │   │   ├── Badge.jsx            # Achievement badge cards
-│   │   │   ├── StudyPulse.jsx       # Activity heatmap
 │   │   │   ├── UploadForm.jsx       # Smart upload with AI validation
 │   │   │   └── ...
 │   │   └── context/             # Auth, Theme, Material, Course providers
@@ -191,13 +198,12 @@ studyhive/
 ├── backend/                     # Express API
 │   ├── src/
 │   │   ├── controllers/         # Route handlers
-│   │   ├── models/              # 8 Mongoose schemas
+│   │   ├── models/              # 8+ Mongoose schemas
 │   │   ├── routes/              # API route definitions
 │   │   ├── services/            # Gemini AI service layer
 │   │   ├── middleware/          # Auth, upload, error handling
-│   │   └── utils/               # File extraction utilities
+│   │   └── utils/               # File extraction + Vision OCR utilities
 │   └── package.json
-├── .github/workflows/ci-cd.yml # GitHub Actions CI/CD pipeline
 ├── package.json                 # Root concurrent runner
 └── README.md
 ```
@@ -208,7 +214,7 @@ studyhive/
 
 ### 1. Prerequisites
 - **Node.js** v18+
-- **MongoDB** (Local or Atlas)
+- **MongoDB** (Local or [Atlas](https://www.mongodb.com/atlas))
 - **Google Gemini API Key** ([Get one free](https://aistudio.google.com/))
 - **Cloudinary Account** ([Sign up free](https://cloudinary.com/))
 
@@ -245,6 +251,34 @@ cd frontend && npm install && npm run dev
 
 ---
 
+## 🧠 AI Architecture Highlights
+
+### Gemini Model Fallback Hierarchy
+StudyHive never fails silently. If the primary model (`gemini-2.5-flash`) hits a rate limit or error, it automatically cascades through:
+1. `gemini-2.5-flash` → 2. `gemini-2.0-flash` → 3. `gemini-1.5-flash` → 4. `gemini-pro-latest`
+
+### Vision OCR Pipeline
+For scanned documents and image-based PDFs:
+```
+Upload → Standard Text Extraction (pdf-parse/mammoth)
+  ├── Text found? → Run AI Pipeline (summary, terms, quiz)
+  └── Empty? → Send raw bytes to Gemini Vision (multimodal)
+       ├── Vision extracted text? → Run AI Pipeline
+       └── Still empty? → Reject file (400 Bad Request)
+```
+
+### Masterclass Generation Flow
+```
+Material Key Terms + File Content + Professor Persona + Duration
+  → Mandatory Curriculum Injection (every term must be taught)
+  → Dynamic Scene Scaling (6-20 scenes based on terms + duration)
+  → Gemini generates structured JSON with typed scenes
+  → Frontend renders with type-specific Framer Motion animations
+  → TTS narrates + karaoke highlights + interactive quizzes
+```
+
+---
+
 ## 👥 Authors
 
 <table>
@@ -260,14 +294,3 @@ cd frontend && npm install && npm run dev
   <i>Built to change the way university students interact with knowledge.</i><br><br>
   <b>🐝 StudyHive — Where Knowledge Comes Alive.</b>
 </div>
-
-
-## 🌟 Advanced AI Features (BiT AI Hackathon 2026)
-
-StudyHive brings educational platforming to the next level by natively integrating deep AI capabilities aimed at completely reimagining how users consume and retain knowledge:
-
-- **AI Assistant (Honey Hub)**: A context-aware chatbot and AI Swiss knife that supports document Q&A, quiz generation, automated course summarizations, and generating dynamic explanations based on uploaded material.
-- **Honey Teacher (Virtual Tutor)**: A highly interactive, visually animated teaching assistant. It takes any topic and fully autonomously synthesizes a complete slide deck and animated "masterclass" presenting the content with different expert personas, utilizing Speech Synthesis and visually stunning Framer Motion workflows.
-- **Honey Interviewer**: A mock-interview simulator tailored for software engineers and professionals. Conducts live voice-to-text behavioral and technical interviews, grading the user's responses, offering corrective explanations, and tracking metrics.
-- **Honey Exit Indicator**: A rich dashboard dedicated to providing analytical probability on exit exam readiness, powered by AI extrapolation of the student's historical quiz, interview, and lesson performances.
-
