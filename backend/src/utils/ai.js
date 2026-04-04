@@ -48,6 +48,138 @@ const path = require('path');
 const mammoth = require('mammoth');
 const { parseOffice } = require('officeparser');
 
+/**
+ * Detect file type from buffer magic bytes when extensions/names are unreliable.
+ */
+function detectMimeFromBuffer(buffer) {
+  if (!buffer || buffer.length < 8) return 'unknown';
+  // PDF: starts with %PDF
+  if (buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46) return 'application/pdf';
+  // ZIP (also docx, pptx, xlsx): starts with PK
+  if (buffer[0] === 0x50 && buffer[1] === 0x4B) return 'application/zip';
+  // PNG
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) return 'image/png';
+  // JPEG
+  if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) return 'image/jpeg';
+  // GIF
+  if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) return 'image/gif';
+  // WEBP (RIFF....WEBP)
+  if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 && buffer.length > 11 && buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50) return 'image/webp';
+  return 'unknown';
+}
+
+/**
+ * Core extraction logic — works on a raw buffer + filename/extension hints.
+ * Used by both extractTextFromFile (path-based) and extractTextFromBuffer (multer-based).
+ */
+async function extractFromBuffer(dataBuffer, originalName = '', sourceHint = '') {
+  const lowerName = originalName.toLowerCase();
+  const lowerHint = sourceHint.toLowerCase();
+
+  // Archives bypass
+  if (['.zip', '.rar', '.tar', '.gz', '.7z'].some(ext => lowerName.endsWith(ext))) {
+    return '[ARCHIVE_FILE]';
+  }
+
+  // Detect type from extension first, then fall back to magic bytes
+  let fileType = 'unknown';
+  if (lowerName.endsWith('.pdf') || lowerHint.includes('.pdf')) fileType = 'pdf';
+  else if (lowerName.endsWith('.docx') || lowerHint.includes('.docx')) fileType = 'docx';
+  else if (lowerName.endsWith('.doc') || lowerHint.includes('.doc')) fileType = 'doc';
+  else if (lowerName.endsWith('.pptx') || lowerName.endsWith('.ppt') || lowerHint.includes('.ppt')) fileType = 'ppt';
+  else if (['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp'].some(ext => lowerName.endsWith(ext))) fileType = 'image';
+  else if (['.txt', '.md', '.csv', '.json', '.js', '.py', '.java', '.c', '.cpp', '.html', '.css', '.xml', '.yaml', '.yml', '.log'].some(ext => lowerName.endsWith(ext))) fileType = 'text';
+
+  // If extension didn't match, use magic bytes
+  if (fileType === 'unknown') {
+    const mime = detectMimeFromBuffer(dataBuffer);
+    console.log(`[Honey AI] Extension detection failed for "${originalName}", magic-byte MIME: ${mime}`);
+    if (mime === 'application/pdf') fileType = 'pdf';
+    else if (mime === 'application/zip') {
+      // ZIP could be docx/pptx/xlsx — check originalName more carefully
+      if (lowerName.includes('docx')) fileType = 'docx';
+      else if (lowerName.includes('pptx') || lowerName.includes('ppt')) fileType = 'ppt';
+      else fileType = 'docx'; // default: try mammoth → officeparser
+    }
+    else if (mime.startsWith('image/')) fileType = 'image';
+  }
+
+  console.log(`[Honey AI] Extracting text — type: ${fileType}, file: "${originalName}", buffer: ${dataBuffer.length} bytes`);
+
+  let extractedText = '';
+
+  try {
+    if (fileType === 'pdf') {
+      try {
+        const data = await pdfParse(dataBuffer);
+        extractedText = data.text || '';
+        console.log(`[Honey AI] pdf-parse extracted ${extractedText.length} chars`);
+      } catch (pdfErr) {
+        console.warn(`[Honey AI] pdf-parse failed: ${pdfErr.message}. Trying Vision OCR...`);
+      }
+    } else if (fileType === 'docx' || fileType === 'doc') {
+      try {
+        const result = await mammoth.extractRawText({ buffer: dataBuffer });
+        extractedText = result.value || '';
+        console.log(`[Honey AI] mammoth extracted ${extractedText.length} chars`);
+      } catch (mammothErr) {
+        console.warn(`[Honey AI] mammoth failed: ${mammothErr.message}. Trying officeparser...`);
+        try {
+          extractedText = await parseOffice(dataBuffer);
+          console.log(`[Honey AI] officeparser extracted ${(extractedText || '').length} chars`);
+        } catch (officeErr) {
+          console.warn(`[Honey AI] officeparser also failed: ${officeErr.message}`);
+        }
+      }
+    } else if (fileType === 'ppt') {
+      try {
+        extractedText = await parseOffice(dataBuffer);
+        console.log(`[Honey AI] officeparser (ppt) extracted ${(extractedText || '').length} chars`);
+      } catch (officeErr) {
+        console.warn(`[Honey AI] officeparser (ppt) failed: ${officeErr.message}`);
+      }
+    } else if (fileType === 'image') {
+      // Images have no text to parse — go straight to Vision OCR
+      console.log('[Honey AI] Image file detected — skipping text parsers, will use Vision OCR.');
+    } else if (fileType === 'text') {
+      extractedText = dataBuffer.toString('utf8');
+      console.log(`[Honey AI] Plain text read: ${extractedText.length} chars`);
+    } else {
+      // Unknown type — try reading as utf8 text first
+      const rawText = dataBuffer.toString('utf8');
+      // Check if it looks like valid text (not binary garbage)
+      const printableRatio = rawText.substring(0, 1000).replace(/[^\x20-\x7E\r\n\t]/g, '').length / Math.min(rawText.length, 1000);
+      if (printableRatio > 0.85) {
+        extractedText = rawText;
+        console.log(`[Honey AI] Treated as plain text (${(printableRatio * 100).toFixed(0)}% printable): ${extractedText.length} chars`);
+      } else {
+        console.log(`[Honey AI] Binary file detected (${(printableRatio * 100).toFixed(0)}% printable) — will try Vision OCR.`);
+      }
+    }
+  } catch (parseErr) {
+    console.error(`[Honey AI] Parser threw unexpected error: ${parseErr.message}`);
+  }
+
+  // ── VISION OCR FALLBACK ─────────────────────────────────────────────────────
+  if (!extractedText || extractedText.trim().length === 0) {
+    console.warn('[Honey AI] Standard extraction returned empty. Attempting Vision OCR fallback...');
+    try {
+      const visionText = await extractWithGeminiVision(sourceHint || null, originalName, dataBuffer);
+      if (visionText && visionText.trim().length > 20) {
+        console.log(`[Honey AI] ✅ Vision OCR succeeded! Extracted ${visionText.length} chars.`);
+        return visionText;
+      }
+    } catch (visionErr) {
+      console.warn(`[Honey AI] Vision OCR fallback failed: ${visionErr.message}`);
+    }
+  }
+
+  return extractedText || '';
+}
+
+/**
+ * Extract text from a file path or URL — the legacy interface.
+ */
 async function extractTextFromFile(fileUrl, originalName = '') {
   try {
     let dataBuffer;
@@ -58,60 +190,45 @@ async function extractTextFromFile(fileUrl, originalName = '') {
     } else {
       let localPath = fileUrl;
       if (!path.isAbsolute(fileUrl)) {
-         localPath = path.resolve(__dirname, '../../', fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl);
+        localPath = path.resolve(__dirname, '../../', fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl);
       }
-      
       if (!fs.existsSync(localPath)) {
         console.warn('[Honey AI] Local file not found:', localPath);
-        return "";
+        return '';
       }
       dataBuffer = fs.readFileSync(localPath);
     }
 
-    const lowerCaseUrl = fileUrl.toLowerCase();
-    const lowerCaseName = originalName.toLowerCase();
-    
-    // Archives bypass — they genuinely have no readable text
-    if (lowerCaseName.endsWith('.zip') || lowerCaseName.endsWith('.rar') || lowerCaseName.endsWith('.tar') || lowerCaseName.endsWith('.gz')) {
-      return "[ARCHIVE_FILE]";
-    }
-
-    let extractedText = "";
-
-    if (lowerCaseUrl.includes('.pdf') || lowerCaseName.includes('.pdf')) {
-      const data = await pdfParse(dataBuffer);
-      extractedText = data.text;
-    } else if (lowerCaseUrl.includes('.docx') || lowerCaseName.includes('.docx') || lowerCaseUrl.includes('.doc') || lowerCaseName.includes('.doc')) {
-      try {
-         const result = await mammoth.extractRawText({ buffer: dataBuffer });
-         extractedText = result.value;
-      } catch (err) {
-         extractedText = await parseOffice(dataBuffer);
-      }
-    } else if (lowerCaseUrl.includes('.pptx') || lowerCaseName.includes('.pptx') || lowerCaseUrl.includes('.ppt') || lowerCaseName.includes('.ppt')) {
-      extractedText = await parseOffice(dataBuffer);
-    } else {
-      extractedText = dataBuffer.toString('utf8');
-    }
-
-    // ── VISION OCR FALLBACK ─────────────────────────────────────────────────────
-    if (!extractedText || extractedText.trim().length === 0) {
-      console.warn('[Honey AI] Standard text extraction returned empty. Attempting Vision OCR fallback...');
-      try {
-        const visionText = await extractWithGeminiVision(fileUrl, originalName);
-        if (visionText && visionText.trim().length > 20) {
-          console.log('[Honey AI] ✅ Vision OCR succeeded! Extracted', visionText.length, 'chars.');
-          return visionText;
-        }
-      } catch (visionErr) {
-        console.warn('[Honey AI] Vision OCR fallback failed:', visionErr.message);
-      }
-    }
-
-    return extractedText || "";
+    return await extractFromBuffer(dataBuffer, originalName, fileUrl);
   } catch (err) {
     console.error('[Honey AI] Failed to extract text from file:', err.message);
-    return "";
+    return '';
+  }
+}
+
+/**
+ * Extract text directly from a multer file object's buffer or disk path.
+ * This is the preferred method for uploaded files — avoids re-reading from disk.
+ */
+async function extractTextFromUpload(multerFile) {
+  try {
+    let dataBuffer;
+    if (multerFile.buffer) {
+      dataBuffer = multerFile.buffer;
+    } else if (multerFile.path) {
+      if (!fs.existsSync(multerFile.path)) {
+        console.warn('[Honey AI] Uploaded file not found on disk:', multerFile.path);
+        return '';
+      }
+      dataBuffer = fs.readFileSync(multerFile.path);
+    } else {
+      console.warn('[Honey AI] Multer file has neither buffer nor path');
+      return '';
+    }
+    return await extractFromBuffer(dataBuffer, multerFile.originalname || '', multerFile.path || '');
+  } catch (err) {
+    console.error('[Honey AI] Failed to extract text from upload:', err.message);
+    return '';
   }
 }
 
@@ -164,20 +281,25 @@ const generateSmartSummary = async (filePath, title, originalName = '') => {
  * Gemini Vision OCR — sends the raw file bytes to Gemini's multimodal model
  * to extract text from scanned PDFs, images, and heavily formatted documents.
  */
-async function extractWithGeminiVision(filePath, originalName) {
+async function extractWithGeminiVision(filePath, originalName, preloadedBuffer = null) {
   if (!genAI) throw new Error('No Gemini API key for Vision OCR');
 
-  let dataBuffer;
-  if (filePath.startsWith('http')) {
-    const response = await axios.get(filePath, { responseType: 'arraybuffer' });
-    dataBuffer = Buffer.from(response.data);
-  } else {
-    let localPath = filePath;
-    if (!path.isAbsolute(filePath)) {
-      localPath = path.resolve(__dirname, '../../', filePath.startsWith('/') ? filePath.slice(1) : filePath);
+  let dataBuffer = preloadedBuffer;
+  
+  if (!dataBuffer) {
+    if (filePath && filePath.startsWith('http')) {
+      const response = await axios.get(filePath, { responseType: 'arraybuffer' });
+      dataBuffer = Buffer.from(response.data);
+    } else if (filePath) {
+      let localPath = filePath;
+      if (!path.isAbsolute(filePath)) {
+        localPath = path.resolve(__dirname, '../../', filePath.startsWith('/') ? filePath.slice(1) : filePath);
+      }
+      if (!fs.existsSync(localPath)) throw new Error('File not found for Vision OCR');
+      dataBuffer = fs.readFileSync(localPath);
+    } else {
+      throw new Error('No buffer and no valid filePath provided for Vision OCR');
     }
-    if (!fs.existsSync(localPath)) throw new Error('File not found for Vision OCR');
-    dataBuffer = fs.readFileSync(localPath);
   }
 
   // Determine MIME type
@@ -300,5 +422,6 @@ async function runAIPipeline(textContent, title) {
 
 module.exports = {
   generateSmartSummary,
-  extractTextFromFile
+  extractTextFromFile,
+  extractTextFromUpload
 };

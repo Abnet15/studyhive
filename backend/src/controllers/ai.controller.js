@@ -2,7 +2,7 @@ const geminiService = require('../services/gemini.service');
 const ApiError = require('../utils/ApiError');
 const Bookmark = require('../models/Bookmark.model');
 const Material = require('../models/Material.model');
-const { extractTextFromFile } = require('../utils/ai');
+const { extractTextFromFile, extractTextFromUpload } = require('../utils/ai');
 const path = require('path');
 const mongoose = require('mongoose');
 
@@ -52,8 +52,8 @@ exports.analyzeFile = async (req, res, next) => {
   try {
     if (!req.file) throw new ApiError(400, 'No file uploaded for analysis');
     
-    const fileUrl = req.file.path; // from multer
-    const extractedText = await extractTextFromFile(fileUrl, req.file.originalname);
+    // Use the robust upload extractor
+    const extractedText = await extractTextFromUpload(req.file);
     
     if (!extractedText || extractedText.trim().length === 0) {
        throw new ApiError(400, "Could not extract text from the file.");
@@ -73,8 +73,8 @@ exports.extractFileText = async (req, res, next) => {
   try {
     if (!req.file) throw new ApiError(400, 'No file uploaded for extraction');
     
-    const fileUrl = req.file.path;
-    const extractedText = await extractTextFromFile(fileUrl, req.file.originalname);
+    // Use the robust upload extractor
+    const extractedText = await extractTextFromUpload(req.file);
     
     if (!extractedText || extractedText.trim().length === 0) {
        throw new ApiError(400, "Could not extract text from the file.");
@@ -136,8 +136,7 @@ exports.voiceChat = async (req, res, next) => {
 
     // If a file was uploaded with the request, extract its text and append to context
     if (req.file) {
-      const fileUrl = req.file.path;
-      const extractedText = await extractTextFromFile(fileUrl, req.file.originalname);
+      const extractedText = await extractTextFromUpload(req.file);
       if (extractedText) {
         resolvedContext += `\n\n[FILE CONTEXT PROVIDED BY USER]:\n${extractedText.substring(0, 15000)}`;
       }
