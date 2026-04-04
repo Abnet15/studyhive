@@ -153,8 +153,13 @@ const HoneyInterviewer = () => {
     const u = new SpeechSynthesisUtterance(text);
     u.rate = 0.95;
     
+    const langPrefixes = { 'English': 'en', 'Amharic': 'am', 'French': 'fr', 'Spanish': 'es', 'German': 'de' };
+    const targetPrefix = mode === 'interview' ? (langPrefixes[language] || 'en') : 'en';
+
     const voices = synthRef.current.getVoices();
-    const best = voices.find(v => (v.name.includes('Google') || v.name.includes('Microsoft')) && v.lang.startsWith('en'));
+    let best = voices.find(v => v.lang.startsWith(targetPrefix) && (v.name.includes('Google') || v.name.includes('Microsoft')));
+    if (!best) best = voices.find(v => v.lang.startsWith(targetPrefix));
+    
     if (best) u.voice = best;
 
     u.onstart = () => setIsSpeaking(true);
@@ -172,6 +177,12 @@ const HoneyInterviewer = () => {
 
   const startListening = () => {
     if (isSpeaking) synthRef.current?.cancel();
+
+    if (recognitionRef.current) {
+        const langCodes = { 'English': 'en-US', 'Amharic': 'am-ET', 'French': 'fr-FR', 'Spanish': 'es-ES', 'German': 'de-DE' };
+        recognitionRef.current.lang = mode === 'interview' ? (langCodes[language] || 'en-US') : 'en-US';
+    }
+
     try {
       recognitionRef.current?.start();
       setIsListening(true);
