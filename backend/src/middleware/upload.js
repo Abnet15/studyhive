@@ -17,22 +17,19 @@ if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY) {
   storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: async (req, file) => {
-      let resource_type = 'auto'; 
+      // For study materials (documents, zips, PDFs, PPTs), we MUST use raw
+      // to prevent Cloudinary from trying to transcode or manipulate the binary.
       const mt = file.mimetype.toLowerCase();
-      if (
-        mt.includes('pdf') || 
-        mt.includes('document') || 
-        mt.includes('zip') || 
-        mt.includes('rar') || 
-        mt.includes('tar') || 
-        mt.includes('compress') ||
-        mt.includes('octet-stream')
-      ) {
-        resource_type = 'raw';
+      let resourceType = 'raw';
+      
+      // Images can remain 'image' to allow Cloudinary optimizations
+      if (mt.startsWith('image/')) {
+        resourceType = 'image';
       }
+      
       return {
         folder: 'studyhive/materials',
-        resource_type: resource_type,
+        resource_type: resourceType,
         public_id: `${Date.now()}-${file.originalname.replace(/\.[^/.]+$/, "")}`
       };
     },

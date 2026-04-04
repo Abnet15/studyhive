@@ -15,7 +15,7 @@ import { apiClient } from '../services/apiClient';
 const MaterialDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { materials, materialsLoading, recordDownload, rateMaterial } = useMaterials();
   const { courses } = useCourses();
   const toast = useToast();
@@ -26,6 +26,25 @@ const MaterialDetail = () => {
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
   const material = materials.find((m) => String(m.id) === String(id));
+
+  React.useEffect(() => {
+    let mounted = true;
+    const checkBookmark = async () => {
+      if (!user || !material) return;
+      try {
+        const data = await apiClient.get(`/materials/${material.id}`);
+        if (mounted && data.material) {
+          setBookmarked(data.material.bookmarked);
+        }
+      } catch (err) {
+        console.error('Failed to fetch material details', err);
+      }
+    };
+    if (material) {
+      checkBookmark();
+    }
+    return () => { mounted = false; };
+  }, [material, user]);
 
   const fadeIn = {
     hidden: { opacity: 0, y: 20 },
@@ -92,22 +111,7 @@ const MaterialDetail = () => {
     }
   };
 
-  React.useEffect(() => {
-    let mounted = true;
-    const checkBookmark = async () => {
-      if (!user) return;
-      try {
-        const data = await apiClient.get(`/materials/${material.id}`);
-        if (mounted && data.material) {
-          setBookmarked(data.material.bookmarked);
-        }
-      } catch (err) {
-        console.error('Failed to fetch material details', err);
-      }
-    };
-    checkBookmark();
-    return () => { mounted = false; };
-  }, [material.id, user]);
+
 
   const handleBookmark = async () => {
     if (!user) {
@@ -120,10 +124,7 @@ const MaterialDetail = () => {
       const previousState = bookmarked;
       setBookmarked(!previousState);
       
-      const { token } = JSON.parse(localStorage.getItem('studyhive_token') || '{"token":null}') || { token: localStorage.getItem('studyhive_token') };
-      const authToken = typeof token === 'string' ? token : localStorage.getItem('studyhive_token');
-      
-      const data = await apiClient.post(`/materials/${material.id}/bookmark`, { action: 'toggle' }, { token: authToken });
+      const data = await apiClient.post(`/materials/${material.id}/bookmark`, { action: 'toggle' }, { token });
       setBookmarked(data.bookmarked);
       toast.success(data.bookmarked ? 'Bookmarked!' : 'Bookmark removed');
     } catch (error) {

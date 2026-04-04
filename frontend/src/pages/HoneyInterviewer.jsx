@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Mic, MicOff, Square, Upload, Briefcase, MessageCircle, FileText, ChevronRight, CheckCircle } from 'lucide-react';
+import { Play, Mic, MicOff, Square, Upload, Briefcase, MessageCircle, FileText, ChevronRight, CheckCircle, Send } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -29,6 +29,7 @@ const HoneyInterviewer = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [chatHistory, setChatHistory] = useState([]);
   const [liveTranscript, setLiveTranscript] = useState('');
+  const [textInput, setTextInput] = useState('');
   
   const [error, setError] = useState('');
 
@@ -85,6 +86,14 @@ const HoneyInterviewer = () => {
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [chatHistory, liveTranscript]);
+
+  const handleTextSubmit = (e) => {
+    e.preventDefault();
+    if (!textInput.trim() || isSpeaking) return;
+    const text = textInput;
+    setTextInput('');
+    handleUserSpeechDone(text);
+  };
 
   const handleUserSpeechDone = async (text) => {
     if (!text.trim()) return;
@@ -311,7 +320,7 @@ const HoneyInterviewer = () => {
               {error && <div className="text-red-400 mb-4 text-center font-medium bg-red-500/10 py-3 rounded-xl border border-red-500/20">{error}</div>}
 
               <button onClick={startCall} className="w-full py-5 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-lg flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30 hover:scale-[1.02] active:scale-95 transition-all mt-4">
-                <Mic className="w-6 h-6" /> Start Voice Session
+                <Mic className="w-6 h-6" /> {mode === 'interview' ? 'Submit Job Spec & Start Interview' : 'Submit Topic & Start Practice'}
               </button>
             </motion.div>
           )}
@@ -363,7 +372,12 @@ const HoneyInterviewer = () => {
         {/* Live Subtitles / History */}
         <div className="w-full max-w-2xl h-48 md:h-64 rounded-3xl bg-white/40 dark:bg-black/40 border border-slate-900/10 dark:border-white/5 backdrop-blur-xl p-5 overflow-y-auto mb-10 flex flex-col gap-4 font-medium" ref={scrollRef}>
           {chatHistory.length === 0 && !isSpeaking && !isListening && (
-            <div className="text-center text-slate-400 dark:text-slate-500 my-auto text-sm">Waiting for the AI to connect...</div>
+            <div className="text-center text-slate-400 dark:text-slate-500 my-auto text-sm flex flex-col items-center gap-3">
+               <div className="w-8 h-8 md:w-10 md:h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+               {mode === 'interview' && (contextText || selectedFile) 
+                  ? "🧠 AI is analyzing your Job Description and preparing an interview strategy..." 
+                  : "🧠 AI is preparing your personalized English lesson..."}
+            </div>
           )}
           {chatHistory.map((msg, i) => (
             <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
@@ -380,14 +394,33 @@ const HoneyInterviewer = () => {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-6">
-          <button onClick={isListening ? stopListening : startListening} className={`w-20 h-20 rounded-full flex items-center justify-center border-4 transition-all ${isListening ? 'bg-red-500/20 border-red-500 text-red-500' : 'bg-slate-900/10 dark:bg-white/10 border-slate-900/30 dark:border-white/20 text-slate-900 dark:text-white hover:bg-slate-900/20 dark:bg-white/20'}`}>
+        <div className="w-full max-w-2xl flex flex-col items-center gap-5">
+          <button onClick={isListening ? stopListening : startListening} className={`w-20 h-20 rounded-full flex items-center justify-center border-4 transition-all ${isListening ? 'bg-red-500/20 border-red-500 text-red-500 shadow-lg shadow-red-500/20' : 'bg-slate-900/10 dark:bg-white/10 border-slate-900/30 dark:border-white/20 text-slate-900 dark:text-white hover:bg-slate-900/20 dark:bg-white/20'}`}>
             {isListening ? <Square className="w-8 h-8 flex-shrink-0 fill-current" /> : <Mic className="w-8 h-8" />}
           </button>
+          
+          <form onSubmit={handleTextSubmit} className="w-full flex items-center gap-3 bg-white/60 dark:bg-slate-900/70 p-2 pl-4 rounded-2xl border border-slate-200 dark:border-slate-800 backdrop-blur-md shadow-sm transition-all focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20">
+            <input 
+              type="text" 
+              value={textInput} 
+              onChange={e => setTextInput(e.target.value)} 
+              placeholder={isSpeaking ? "AI is speaking..." : mode === 'english' ? "Type your message to practice writing..." : "Type your answer here..."}
+              disabled={isSpeaking}
+              className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 text-slate-900 dark:text-white disabled:opacity-50 outline-none placeholder-slate-400 dark:placeholder-slate-500"
+            />
+            <button 
+              type="submit" 
+              disabled={!textInput.trim() || isSpeaking}
+              className="p-3 rounded-xl bg-indigo-500 text-white disabled:opacity-50 disabled:bg-slate-300 dark:disabled:bg-slate-700 hover:bg-indigo-600 transition-colors shadow-md"
+            >
+              <Send className="w-5 h-5 -ml-0.5" />
+            </button>
+          </form>
+
+          <p className="text-slate-400 dark:text-slate-500 text-xs text-center max-w-sm font-medium">
+            {isListening ? "Speak clearly into your microphone..." : "Microphone is off. Click to talk, or type your response to practice writing!"}
+          </p>
         </div>
-        <p className="text-slate-400 dark:text-slate-500 text-xs mt-6 text-center max-w-sm font-medium">
-          {isListening ? "Speak clearly into your microphone. Say what you want, then pause." : "Microphone is off. Click to talk when you're ready to answer."}
-        </p>
 
       </main>
     </div>

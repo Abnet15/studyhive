@@ -45,8 +45,28 @@ async function generateWithFallback(prompt) {
 
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const crypto = require('crypto');
 const mammoth = require('mammoth');
 const { parseOffice } = require('officeparser');
+
+/**
+ * officeparser's parseOffice() needs a file path with extension to work
+ * reliably. When given a raw buffer it often silently returns undefined.
+ * This helper writes the buffer to a temp file, calls parseOffice, then cleans up.
+ */
+async function parseOfficeFromBuffer(dataBuffer, originalName) {
+  const ext = path.extname(originalName).toLowerCase() || '.pptx';
+  const tmpName = `studyhive_${crypto.randomBytes(8).toString('hex')}${ext}`;
+  const tmpPath = path.join(os.tmpdir(), tmpName);
+  try {
+    fs.writeFileSync(tmpPath, dataBuffer);
+    const text = await parseOffice(tmpPath);
+    return typeof text === 'string' ? text : '';
+  } finally {
+    try { fs.unlinkSync(tmpPath); } catch (_) {}
+  }
+}
 
 /**
  * Detect file type from buffer magic bytes when extensions/names are unreliable.
@@ -125,16 +145,16 @@ async function extractFromBuffer(dataBuffer, originalName = '', sourceHint = '')
       } catch (mammothErr) {
         console.warn(`[Honey AI] mammoth failed: ${mammothErr.message}. Trying officeparser...`);
         try {
-          extractedText = await parseOffice(dataBuffer);
-          console.log(`[Honey AI] officeparser extracted ${(extractedText || '').length} chars`);
+          extractedText = await parseOfficeFromBuffer(dataBuffer, originalName);
+          console.log(`[Honey AI] officeparser extracted ${extractedText.length} chars`);
         } catch (officeErr) {
           console.warn(`[Honey AI] officeparser also failed: ${officeErr.message}`);
         }
       }
     } else if (fileType === 'ppt') {
       try {
-        extractedText = await parseOffice(dataBuffer);
-        console.log(`[Honey AI] officeparser (ppt) extracted ${(extractedText || '').length} chars`);
+        extractedText = await parseOfficeFromBuffer(dataBuffer, originalName);
+        console.log(`[Honey AI] officeparser (ppt) extracted ${extractedText.length} chars`);
       } catch (officeErr) {
         console.warn(`[Honey AI] officeparser (ppt) failed: ${officeErr.message}`);
       }
@@ -161,6 +181,7 @@ async function extractFromBuffer(dataBuffer, originalName = '', sourceHint = '')
   }
 
   // ── VISION OCR FALLBACK ─────────────────────────────────────────────────────
+  extractedText = extractedText || '';
   if (!extractedText || extractedText.trim().length === 0) {
     console.warn('[Honey AI] Standard extraction returned empty. Attempting Vision OCR fallback...');
     try {
@@ -216,11 +237,16 @@ async function extractTextFromUpload(multerFile) {
     if (multerFile.buffer) {
       dataBuffer = multerFile.buffer;
     } else if (multerFile.path) {
-      if (!fs.existsSync(multerFile.path)) {
+      if (multerFile.path.startsWith('http')) {
+        console.log(`[Honey AI] Downloading remote file for extraction: ${multerFile.path}`);
+        const response = await axios.get(multerFile.path, { responseType: 'arraybuffer' });
+        dataBuffer = Buffer.from(response.data);
+      } else if (!fs.existsSync(multerFile.path)) {
         console.warn('[Honey AI] Uploaded file not found on disk:', multerFile.path);
         return '';
+      } else {
+        dataBuffer = fs.readFileSync(multerFile.path);
       }
-      dataBuffer = fs.readFileSync(multerFile.path);
     } else {
       console.warn('[Honey AI] Multer file has neither buffer nor path');
       return '';

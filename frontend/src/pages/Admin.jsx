@@ -8,8 +8,20 @@ import { apiClient } from '../services/apiClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, FolderLock, FileText, DownloadCloud, Activity, LayoutDashboard, 
-  Settings, Award, RefreshCcw, Download, ShieldCheck, Ban, Trash2, Eye, ShieldAlert
+  Settings, Award, RefreshCcw, Download, ShieldCheck, Ban, Trash2, Eye, ShieldAlert,
+  TrendingUp, Zap, Server
 } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+const activityData = [
+  { time: '00:00', traffic: 120, queries: 40 },
+  { time: '04:00', traffic: 80, queries: 30 },
+  { time: '08:00', traffic: 250, queries: 120 },
+  { time: '12:00', traffic: 450, queries: 300 },
+  { time: '16:00', traffic: 380, queries: 250 },
+  { time: '20:00', traffic: 290, queries: 180 },
+  { time: '24:00', traffic: 150, queries: 70 },
+];
 
 const fetchDashboardStats = async ({ queryKey }) => {
   const [_key, token] = queryKey;
@@ -24,13 +36,18 @@ const StatCard = ({ label, value, icon, color, delay }) => (
     className="glass-card p-6 group hover:-translate-y-2 transition-all duration-300 overflow-hidden relative shadow-2xl"
   >
     <div className={`absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br ${color} opacity-10 rounded-full blur-3xl group-hover:opacity-30 transition-opacity animate-pulse-glow`}></div>
-    <div className="relative z-10 flex items-center justify-between">
-      <div>
-        <div className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-2">{label}</div>
-        <div className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">{value}</div>
+    <div className="relative z-10 flex flex-col justify-between h-full">
+      <div className="flex justify-between items-start mb-4">
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white bg-gradient-to-br ${color} shadow-lg shadow-black/10 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500`}>
+          {icon}
+        </div>
+        <div className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1">
+          <TrendingUp className="w-3 h-3 text-emerald-500" /> +12%
+        </div>
       </div>
-      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white bg-gradient-to-br ${color} shadow-lg shadow-black/10 group-hover:scale-110 transition-transform`}>
-        {icon}
+      <div>
+        <div className="text-4xl font-black text-slate-900 dark:text-white tracking-tight mb-1">{value}</div>
+        <div className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">{label}</div>
       </div>
     </div>
   </motion.div>
@@ -308,52 +325,85 @@ const Admin = () => {
                   
                   {/* Left Col: Server Activity Chart */}
                   <div className="lg:col-span-2 space-y-6 flex flex-col">
-                     <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
-                       <Activity className="w-5 h-5 text-primary-500" /> Global Activity Monitor
-                     </h3>
-                     <div className="glass-card flex-1 p-8 border-dashed flex items-end justify-between gap-2 overflow-hidden relative group">
-                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]"></div>
-                        {[40, 70, 45, 90, 65, 85, 30, 55, 80, 100, 60, 40, 75, 50].map((h, i) => (
-                          <motion.div 
-                            key={i}
-                            initial={{ height: 0 }}
-                            animate={{ height: `${h}%` }}
-                            transition={{ delay: i * 0.05, duration: 1, type: "spring" }}
-                            className="w-full bg-gradient-to-t from-primary-600 to-indigo-400 rounded-t-lg opacity-80 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-2 relative overflow-hidden"
-                          >
-                             <div className="absolute top-0 left-0 w-full h-full bg-white/20"></div>
-                          </motion.div>
-                        ))}
+                     <div className="flex items-center justify-between">
+                       <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                         <Activity className="w-5 h-5 text-primary-500" /> Global Activity Monitor
+                       </h3>
+                       <div className="flex gap-2">
+                         <span className="px-3 py-1 rounded-full bg-primary-500/10 text-primary-600 text-[10px] font-black uppercase tracking-widest flex items-center gap-1"><Server className="w-3 h-3"/> Active Nodes</span>
+                       </div>
+                     </div>
+                     <div className="glass-card flex-1 p-6 flex flex-col min-h-[350px] relative overflow-hidden group shadow-2xl border-white/20">
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.02]"></div>
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 blur-[80px] rounded-full pointer-events-none"></div>
+                        
+                        <div className="flex-1 w-full h-full relative z-10">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={activityData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                              <defs>
+                                <linearGradient id="colorTraffic" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4}/>
+                                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                                </linearGradient>
+                                <linearGradient id="colorQueries" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.4}/>
+                                  <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                                </linearGradient>
+                              </defs>
+                              <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 'bold' }} dy={10} />
+                              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 'bold' }} />
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" strokeOpacity={0.3} />
+                              <Tooltip 
+                                contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)' }}
+                                itemStyle={{ fontWeight: 'black' }}
+                                labelStyle={{ fontWeight: 'bold', color: '#64748b', marginBottom: '4px' }}
+                              />
+                              <Area type="monotone" dataKey="traffic" name="Network Traffic (MB/s)" stroke="#8b5cf6" strokeWidth={4} fillOpacity={1} fill="url(#colorTraffic)" activeDot={{ r: 6, strokeWidth: 0, fill: '#8b5cf6' }} />
+                              <Area type="monotone" dataKey="queries" name="Database Queries/m" stroke="#06b6d4" strokeWidth={4} fillOpacity={1} fill="url(#colorQueries)" activeDot={{ r: 6, strokeWidth: 0, fill: '#06b6d4' }} />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
                      </div>
                   </div>
 
                   {/* Right Col: Top Contributors */}
                   <div className="space-y-6 flex flex-col">
-                     <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
-                       <Award className="w-5 h-5 text-accent-500" /> Top Scholars
-                     </h3>
-                     <div className="glass-card flex-1 p-6 space-y-4 shadow-xl shadow-accent-500/5">
+                     <div className="flex items-center justify-between">
+                       <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
+                         <Award className="w-5 h-5 text-amber-500" /> Top Scholars
+                       </h3>
+                       <button className="text-[10px] text-primary-500 font-black uppercase hover:underline">View All</button>
+                     </div>
+                     <div className="glass-card flex-1 p-6 space-y-4 shadow-2xl border-white/20 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-950">
                         {dashboardLoading ? (
                            [1,2,3,4,5].map(i => <div key={i} className="h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl animate-pulse"></div>)
                         ) : topContributors.length > 0 ? (
                            <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-3">
                               {topContributors.map((c, i) => (
-                                <motion.div key={i} variants={itemVariants} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors border border-transparent hover:border-slate-100 dark:hover:border-slate-800">
-                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black shadow-md ${i===0?'bg-amber-100 text-amber-600 dark:bg-amber-900/30' : i===1?'bg-slate-200 text-slate-600 dark:bg-slate-700' : 'bg-orange-100 text-orange-600 dark:bg-orange-900/30'}`}>
-                                    #{i+1}
+                                <motion.div key={i} variants={itemVariants} className="flex items-center gap-4 p-4 rounded-[1.5rem] hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm hover:shadow-xl border border-transparent hover:border-slate-200 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-800/20 group">
+                                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shadow-inner group-hover:scale-110 transition-transform ${
+                                    i===0 ? 'bg-gradient-to-br from-amber-300 to-amber-500 text-white shadow-amber-500/40' : 
+                                    i===1 ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-white shadow-slate-500/40' : 
+                                    i===2 ? 'bg-gradient-to-br from-orange-300 to-orange-500 text-white shadow-orange-500/40' : 
+                                    'bg-slate-100 dark:bg-slate-800 text-slate-400 shadow-transparent'
+                                  }`}>
+                                    {i < 3 ? <Award className={`w-6 h-6 ${i===0?'text-amber-100':i===1?'text-slate-100':'text-orange-100'}`}/> : `#${i+1}`}
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{c.name || 'Anonymous'}</p>
-                                    <p className="text-xs text-slate-500 truncate">{c.email || 'Hidden Email'}</p>
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-primary-500 transition-colors">{c.name || 'Anonymous'}</p>
+                                    <p className="text-[10px] uppercase font-black tracking-widest text-slate-400 truncate mt-0.5">{c.email || 'Hidden Email'}</p>
                                   </div>
-                                  <div className="text-primary-500 font-black text-sm">{c.uploads} Files</div>
+                                  <div className="text-right">
+                                    <div className="text-lg font-black text-slate-900 dark:text-white leading-none">{c.uploads}</div>
+                                    <div className="text-[9px] uppercase font-black text-primary-500 tracking-widest mt-1">Uploads</div>
+                                  </div>
                                 </motion.div>
                               ))}
                            </motion.div>
                         ) : (
                            <div className="h-full flex flex-col items-center justify-center text-slate-400">
-                             <Award className="w-10 h-10 mb-2 opacity-50" />
-                             <p className="text-xs font-bold uppercase tracking-widest">No data available</p>
+                             <Award className="w-12 h-12 mb-3 opacity-30 text-amber-500" />
+                             <p className="text-xs font-black uppercase tracking-widest">No data available</p>
                            </div>
                         )}
                      </div>
