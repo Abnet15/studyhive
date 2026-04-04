@@ -115,13 +115,34 @@ const ExitExamHub = () => {
   };
 
   // ─── Answer & Navigation ───────────────────────────────────────────────────
-  const selectAnswer = (questionIndex, optionText) => {
+  // Robust matcher: AI might return correctAnswer as "D", "No Preemption", or "D. No Preemption"
+  const isCorrectOption = (opt, idx, correctAnswer) => {
+    if (!correctAnswer) return false;
+    const ca = correctAnswer.trim();
+    const letter = String.fromCharCode(65 + idx); // A, B, C, D, E
+    // Exact match
+    if (opt === ca) return true;
+    // Letter match (e.g. "D")
+    if (ca.length <= 2 && ca.toUpperCase() === letter) return true;
+    // Letter-prefixed match (e.g. "D. No Preemption")
+    if (ca.startsWith(letter + '.') || ca.startsWith(letter + ')')) return true;
+    // Substring containment (e.g. correctAnswer contains the option text or vice versa)
+    if (ca.toLowerCase().includes(opt.toLowerCase()) || opt.toLowerCase().includes(ca.toLowerCase())) return true;
+    return false;
+  };
+
+  const getCorrectIndex = (q) => {
+    return (q.options || []).findIndex((opt, idx) => isCorrectOption(opt, idx, q.correctAnswer));
+  };
+
+  const selectAnswer = (questionIndex, optionIndex) => {
     if (answers[questionIndex] !== undefined) return; // already answered
     
     const q = flatQuestions[questionIndex];
-    const isCorrect = optionText === q.correctAnswer;
+    const correctIdx = getCorrectIndex(q);
+    const isCorrect = optionIndex === correctIdx;
     
-    setAnswers(prev => ({ ...prev, [questionIndex]: optionText }));
+    setAnswers(prev => ({ ...prev, [questionIndex]: optionIndex }));
     setShowExplanation(isCorrect ? 'correct' : 'wrong');
     setCurrentExplanation(q.explanation || '');
   };
@@ -145,7 +166,8 @@ const ExitExamHub = () => {
     flatQuestions.forEach((q, idx) => {
       if (!compMap[q.competency]) compMap[q.competency] = { correct: 0, total: 0 };
       compMap[q.competency].total++;
-      if (answers[idx] === q.correctAnswer) compMap[q.competency].correct++;
+      const correctIdx = getCorrectIndex(q);
+      if (answers[idx] === correctIdx) compMap[q.competency].correct++;
     });
 
     const scores = Object.entries(compMap).map(([name, data]) => ({
@@ -339,8 +361,9 @@ const ExitExamHub = () => {
                 <div className="space-y-3">
                   {(q.options || []).map((opt, idx) => {
                     const letter = String.fromCharCode(65 + idx);
-                    const isSelected = answers[currentQ] === opt;
-                    const isCorrectOpt = opt === q.correctAnswer;
+                    const isSelected = answers[currentQ] === idx;
+                    const correctIdx = getCorrectIndex(q);
+                    const isCorrectOpt = idx === correctIdx;
                     const revealed = isAnswered;
 
                     let optionStyle = 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-white/10 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50 dark:hover:bg-primary-900/10';
@@ -355,7 +378,7 @@ const ExitExamHub = () => {
                         key={idx}
                         whileHover={!revealed ? { scale: 1.01 } : {}}
                         whileTap={!revealed ? { scale: 0.99 } : {}}
-                        onClick={() => selectAnswer(currentQ, opt)}
+                        onClick={() => selectAnswer(currentQ, idx)}
                         disabled={revealed}
                         className={`w-full flex items-center gap-4 p-4 md:p-5 rounded-2xl border text-left transition-all duration-300 ${optionStyle}`}
                       >
