@@ -292,7 +292,7 @@ const UploadForm = () => {
                       {isDragging ? 'Drop your file here!' : 'Click to browse or drag & drop'}
                     </p>
                     <p className="text-xs text-slate-400 mt-1">
-                      PDF, DOCX, ZIP, JPG, PNG — up to 10MB
+                      PDF, DOCX, PPTX, ZIP, JPG, PNG — up to 10MB
                     </p>
                   </div>
                 </div>

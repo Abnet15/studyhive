@@ -214,14 +214,14 @@ const AIAssistant = () => {
                        <div className="relative group/input">
                           <input 
                             type="file" 
-                            accept=".pdf,.doc,.docx"
+                            accept=".pdf,.doc,.docx,.ppt,.pptx"
                             onChange={(e) => setSelectedFile(e.target.files[0])}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                           />
                           <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-8 flex flex-col items-center gap-2 group-hover/input:border-primary-400 group-hover/input:bg-primary-500/5 transition-all">
                              <FileText className="w-10 h-10 text-slate-300 group-hover/input:text-primary-500 transition-colors" />
                              <span className="text-xs font-black text-slate-400 group-hover/input:text-primary-500 uppercase tracking-widest text-center truncate w-full">
-                                {selectedFile ? selectedFile.name : 'Drop PDF/DOCX here'}
+                                {selectedFile ? selectedFile.name : 'Drop PDF/DOCX/PPTX here'}
                              </span>
                           </div>
                        </div>

@@ -232,7 +232,7 @@ const HoneyInterviewer = () => {
   
   if (step === 'select_mode' || step === 'setup') {
     return (
-      <div className="min-h-screen bg-[#020617] text-white flex flex-col py-10 px-4 md:px-8 relative overflow-hidden">
+      <div className="min-h-screen bg-[#020617] text-white flex flex-col -mt-14 sm:-mt-16 pt-14 sm:pt-16 py-10 px-4 md:px-8 relative overflow-hidden">
         <Particles />
         <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
         
@@ -323,7 +323,7 @@ const HoneyInterviewer = () => {
 
   // Active Call Screen
   return (
-    <div className="min-h-screen bg-[#020617] text-white flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-[#020617] text-white flex flex-col -mt-14 sm:-mt-16 pt-14 sm:pt-16 relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.15),transparent_70%)] pointer-events-none" />
       
       {/* Header */}

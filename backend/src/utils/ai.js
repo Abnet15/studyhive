@@ -46,6 +46,7 @@ async function generateWithFallback(prompt) {
 const fs = require('fs');
 const path = require('path');
 const mammoth = require('mammoth');
+const { parseOffice } = require('officeparser');
 
 async function extractTextFromFile(fileUrl, originalName = '') {
   try {
@@ -75,9 +76,17 @@ async function extractTextFromFile(fileUrl, originalName = '') {
     if (lowerCaseUrl.includes('.pdf') || lowerCaseName.includes('.pdf')) {
       const data = await pdfParse(dataBuffer);
       return data.text;
-    } else if (lowerCaseUrl.includes('.doc') || lowerCaseUrl.includes('.docx') || lowerCaseName.includes('.doc') || lowerCaseName.includes('.docx')) {
-      const result = await mammoth.extractRawText({ buffer: dataBuffer });
-      return result.value;
+    } else if (lowerCaseUrl.includes('.docx') || lowerCaseName.includes('.docx') || lowerCaseUrl.includes('.doc') || lowerCaseName.includes('.doc')) {
+      try {
+         const result = await mammoth.extractRawText({ buffer: dataBuffer });
+         return result.value;
+      } catch (err) {
+         // Fallback to officeparser if mammoth fails
+         return await parseOffice(dataBuffer);
+      }
+    } else if (lowerCaseUrl.includes('.pptx') || lowerCaseName.includes('.pptx') || lowerCaseUrl.includes('.ppt') || lowerCaseName.includes('.ppt')) {
+      // Use officeparser strictly for PowerPoint files
+      return await parseOffice(dataBuffer);
     } else {
       return dataBuffer.toString('utf8');
     }
