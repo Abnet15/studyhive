@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
-import { Play, Pause, Sparkles, Video, X, SkipForward, RotateCcw, Volume2, CheckCircle, XCircle, Plus, ChevronRight } from 'lucide-react';
+import { Play, Pause, Sparkles, Video, X, SkipForward, RotateCcw, Volume2, CheckCircle, XCircle, Plus, ChevronRight, ArrowRight } from 'lucide-react';
 
 
 

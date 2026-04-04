@@ -25,7 +25,7 @@ const allowedOrigins = config.clientUrl
 
 app.use(
   cors({
-    origin: allowedOrigins.length ? allowedOrigins : '*',
+    origin: true,
     credentials: true,
   })
 );

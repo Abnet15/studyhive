@@ -149,19 +149,63 @@ class GeminiService {
   }
 
   async getRecommendations(userStats) {
-    const prompt = `Based on the following student state: ${JSON.stringify(userStats)}, 
-    generate 3 concise, motivating study recommendations for today. 
-    Make sure to tailor the recommendations specifically based on the topics they have been studying.
-    Format: Plain text, bullet points. Be brief but specific.`;
+    const prompt = `You are an expert academic advisor AI. Based on this student profile: ${JSON.stringify(userStats)},
+    create a highly personalized 3-step study action plan for TODAY.
+    
+    Return ONLY a strict JSON object like this (no markdown, no code blocks):
+    {
+      "steps": [
+        {
+          "step": 1,
+          "icon": "🎯",
+          "title": "Short action title (max 6 words)",
+          "description": "Concise, specific advice for this student (2 sentences max)",
+          "tag": "Focus Area label",
+          "priority": "high"
+        },
+        {
+          "step": 2,
+          "icon": "📚",
+          "title": "Short action title (max 6 words)",
+          "description": "Concise, specific advice for this student (2 sentences max)",
+          "tag": "Focus Area label",
+          "priority": "medium"
+        },
+        {
+          "step": 3,
+          "icon": "🚀",
+          "title": "Short action title (max 6 words)",
+          "description": "Concise, specific advice for this student (2 sentences max)",
+          "tag": "Focus Area label",
+          "priority": "low"
+        }
+      ],
+      "motivationQuote": "A one-line motivational quote specific to their study topics."
+    }
+    
+    Make the advice SPECIFIC to the topics: ${userStats.aiKnownTopics || 'general studies'}.`;
 
     try {
-      const text = await this.runWithFallback(prompt);
-      return { recommendation: text };
+      const text = await this.runWithFallback(prompt, true);
+      const jsonStart = text.indexOf('{');
+      const jsonEnd = text.lastIndexOf('}') + 1;
+      if (jsonStart === -1) throw new Error('No JSON found');
+      const parsed = JSON.parse(text.substring(jsonStart, jsonEnd));
+      return { steps: parsed.steps || [], motivationQuote: parsed.motivationQuote || '' };
     } catch (err) {
       console.error('[GeminiService] Recommendations Error:', err);
-      throw new Error('Could not fetch recommendations.');
+      // Fallback structured data so UI never breaks
+      return {
+        steps: [
+          { step: 1, icon: '🎯', title: 'Review Your Core Materials', description: 'Revisit your most recent uploads and strengthen your understanding of key concepts.', tag: 'Deep Review', priority: 'high' },
+          { step: 2, icon: '📝', title: 'Run a Practice Quiz', description: 'Use the Practice Arena below to test your knowledge on a topic you studied this week.', tag: 'Self-Testing', priority: 'medium' },
+          { step: 3, icon: '🚀', title: 'Start a Masterclass Session', description: 'Upload a document and let AI teach you the full topic with animations and voice narration.', tag: 'AI Learning', priority: 'low' },
+        ],
+        motivationQuote: 'Every expert was once a beginner. Keep going! 🌟'
+      };
     }
   }
+
 
   async analyzeMaterial(content, title) {
     const prompt = `Title: ${title}\nContent snippet: ${content.substring(0, 5000)}\n\n
