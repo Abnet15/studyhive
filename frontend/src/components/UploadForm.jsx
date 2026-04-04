@@ -29,10 +29,19 @@ const UploadForm = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadPhase, setUploadPhase] = useState(''); // '', 'uploading', 'ai-processing'
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (name === 'file') {
-      setFormData({ ...formData, file: files[0] });
+      const selectedFile = files[0];
+      if (selectedFile && selectedFile.size > MAX_FILE_SIZE) {
+        setErrorMessage(`File "${selectedFile.name}" is too large. Maximum size is 10MB.`);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+      setErrorMessage('');
+      setFormData({ ...formData, file: selectedFile });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -43,6 +52,11 @@ const UploadForm = () => {
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
     if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        setErrorMessage(`File "${file.name}" is too large. Maximum size is 10MB.`);
+        return;
+      }
+      setErrorMessage('');
       setFormData({ ...formData, file });
     }
   };

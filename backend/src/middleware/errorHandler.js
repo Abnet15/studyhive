@@ -16,6 +16,10 @@ const errorHandler = (err, _req, res, _next) => {
   if (err.name === 'UnauthorizedError') {
     return res.status(401).json({ status: 'error', message: 'Invalid token' });
   }
+  
+  if (err.message && err.message.includes('File size too large')) {
+    return res.status(400).json({ status: 'error', message: 'File exceeds the 10MB upload limit. Please upload a smaller file.' });
+  }
 
   return res.status(500).json({
     status: 'error',
