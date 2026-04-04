@@ -60,10 +60,15 @@ const studentSummary = asyncHandler(async (req, res) => {
     ? Math.round((latestExam.totalScore / latestExam.totalMaxScore) * 100)
     : 0; // Default to 0 if no exams taken
 
+  const avgRating = userMaterials.length > 0
+    ? (userMaterials.reduce((sum, m) => sum + (m.rating || 0), 0) / userMaterials.length).toFixed(1)
+    : '0.0';
+
   res.json({
     totalUploads,
     totalDownloads,
-    exitReadiness
+    exitReadiness,
+    avgRating
   });
 });
 

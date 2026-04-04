@@ -19,7 +19,8 @@ const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState({
     totalUploads: 0,
     totalDownloads: 0,
-    exitReadiness: 0
+    exitReadiness: 0,
+    avgRating: '0.0'
   });
 
   useEffect(() => {
@@ -40,7 +41,7 @@ const Dashboard = () => {
     if (token) fetchSummary();
   }, [token]);
 
-  const { totalUploads, totalDownloads, exitReadiness } = dashboardData;
+  const { totalUploads, totalDownloads, exitReadiness, avgRating } = dashboardData;
 
   const sortedMaterials = [...(materials || [])].sort(
     (a, b) => new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime()
