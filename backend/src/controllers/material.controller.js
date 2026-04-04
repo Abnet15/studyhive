@@ -163,8 +163,8 @@ const createMaterial = asyncHandler(async (req, res) => {
     
     // CONTENT VALIDATION GATE
     if (aiData.aiContentValid === false) {
-      // We could optionally delete the uploaded file here to save storage before throwing ApiError
-      throw new ApiError(400, "Honey AI determined this file is not valid educational material (spam, empty, or irrelevant).");
+      // If it's an empty file, reject it completely so it's not saved in the DB
+      throw new ApiError(400, aiData.aiSummary || "This file has absolutely no readable content. Cannot be analyzed or taught. Upload rejected.");
     }
   } catch (err) {
     if (err instanceof ApiError) throw err;

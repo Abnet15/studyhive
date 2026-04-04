@@ -226,12 +226,15 @@ class GeminiService {
     }
   }
 
-  async generateMasterclass(topic, fileContentSnippet = '', teacherPersona = null) {
+  async generateMasterclass(topic, fileContentSnippet = '', teacherPersona = null, duration = 5) {
     const textContext = fileContentSnippet ? `\nCRITICAL CONTEXT: Build this lesson ONLY around this text:\n"""\n${fileContentSnippet.substring(0, 40000)}\n"""\n` : '';
 
     // Build the professor identity block
     const defaultPersona = { name: 'Prof. Nova', tag: 'Universal Expert', desc: 'World-class generalist who explains everything with vivid analogies, real examples, and infectious enthusiasm.' };
     const prof = teacherPersona || defaultPersona;
+    
+    // Determine pacing based on requested duration
+    const numScenes = duration >= 15 ? "15-20" : duration >= 10 ? "10-14" : "6-8";
     
     const personaBlock = `
     YOUR IDENTITY — YOU ARE: ${prof.name} (${prof.tag})
@@ -247,7 +250,8 @@ class GeminiService {
     const prompt = `${personaBlock}
     
     You are the world's BEST interactive teacher in your domain. Teach with energy, precision, and real concrete examples.
-    Create a 6-8 scene interactive animated lesson about: "${topic}".
+    Create a ${numScenes} scene interactive animated masterclass lesson about: "${topic}".
+    This lesson is designed to perfectly fill ${duration} minutes of continuous teaching. Scale the depth and detail accordingly.
     ${textContext}
     
     SCENE TYPES — USE "interactive" at least TWICE (spread throughout):

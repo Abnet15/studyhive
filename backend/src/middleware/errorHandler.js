@@ -18,7 +18,7 @@ const errorHandler = (err, _req, res, _next) => {
   }
   
   if (err.message && err.message.includes('File size too large')) {
-    return res.status(400).json({ status: 'error', message: 'File exceeds the 10MB upload limit. Please upload a smaller file.' });
+    return res.status(400).json({ status: 'error', message: 'File exceeds the platform upload limit. Please upload a smaller file.' });
   }
 
   return res.status(500).json({

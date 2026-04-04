@@ -115,29 +115,122 @@ const generateSmartSummary = async (filePath, title, originalName = '') => {
   const fileText = await extractTextFromFile(filePath, originalName);
   const truncatedText = fileText.substring(0, 100000);
   
-  // We no longer fiercely block short text files (since this is an MVP hackathon demo where 
-  // users might upload dummy text files named "cdcd123"). 
-  // Let the AI just generate a generic response.
+  // ── VISION OCR FALLBACK ─────────────────────────────────────────────────────
+  // If standard text extraction returned nothing, attempt Gemini Vision to read
+  // scanned PDFs, images, and heavily-formatted documents before giving up.
   if (!truncatedText || truncatedText.trim().length === 0) {
-    console.warn('[Honey AI] File content empty. Bypassing AI block for demo purposes.');
+    console.warn('[Honey AI] Standard text extraction returned empty. Attempting Vision OCR fallback...');
     
-    let summaryMessage = 'This file was successfully uploaded! However, no readable text could be extracted. It may be a scanned image or heavily formatted.';
     const lowerName = originalName.toLowerCase();
     
+    // Archives bypass — they genuinely have no readable text
     if (lowerName.endsWith('.zip') || lowerName.endsWith('.rar') || lowerName.endsWith('.tar') || lowerName.endsWith('.gz')) {
-      summaryMessage = 'Archive/ZIP file successfully uploaded! AI text extraction is automatically disabled for compressed folders, but your file is safe and ready for download.';
-    } else if (lowerName.endsWith('.jpg') || lowerName.endsWith('.png') || lowerName.endsWith('.jpeg')) {
-      summaryMessage = 'Image file successfully uploaded! AI text extraction is skipped for raw images without OCR processing.';
+      return {
+        aiSummary: 'Archive/ZIP file successfully uploaded! AI text extraction is automatically disabled for compressed folders, but your file is safe and ready for download.',
+        aiKeyTerms: ['Archive', 'Compressed Format'],
+        aiTopics: ['Uncategorized'],
+        aiContentValid: true,
+        aiQuiz: []
+      };
     }
 
+    // Attempt Gemini Vision OCR for images and scanned docs
+    try {
+      const visionText = await extractWithGeminiVision(filePath, originalName);
+      if (visionText && visionText.trim().length > 20) {
+        console.log('[Honey AI] ✅ Vision OCR succeeded! Extracted', visionText.length, 'chars.');
+        // Re-run the full AI pipeline with the vision-extracted text
+        return await runAIPipeline(visionText, title);
+      }
+    } catch (visionErr) {
+      console.warn('[Honey AI] Vision OCR fallback failed:', visionErr.message);
+    }
+
+    // If even Vision OCR couldn't read it, THEN reject
     return {
-      aiSummary: summaryMessage,
-      aiKeyTerms: ['Uploaded', 'No Text Extracted'],
-      aiTopics: ['Uncategorized'],
-      aiContentValid: true, // Allow it through the gate
+      aiSummary: 'This file contains no readable content even after AI Vision analysis. Please upload a file with actual text or image content.',
+      aiKeyTerms: [],
+      aiTopics: [],
+      aiContentValid: false,
       aiQuiz: []
     };
   }
+
+  // Standard path — we have text, run the AI pipeline
+  return await runAIPipeline(truncatedText, title);
+};
+
+/**
+ * Gemini Vision OCR — sends the raw file bytes to Gemini's multimodal model
+ * to extract text from scanned PDFs, images, and heavily formatted documents.
+ */
+async function extractWithGeminiVision(filePath, originalName) {
+  if (!genAI) throw new Error('No Gemini API key for Vision OCR');
+
+  let dataBuffer;
+  if (filePath.startsWith('http')) {
+    const response = await axios.get(filePath, { responseType: 'arraybuffer' });
+    dataBuffer = Buffer.from(response.data);
+  } else {
+    let localPath = filePath;
+    if (!path.isAbsolute(filePath)) {
+      localPath = path.resolve(__dirname, '../../', filePath.startsWith('/') ? filePath.slice(1) : filePath);
+    }
+    if (!fs.existsSync(localPath)) throw new Error('File not found for Vision OCR');
+    dataBuffer = fs.readFileSync(localPath);
+  }
+
+  // Determine MIME type
+  const lowerName = originalName.toLowerCase();
+  let mimeType = 'application/pdf';
+  if (lowerName.endsWith('.png')) mimeType = 'image/png';
+  else if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) mimeType = 'image/jpeg';
+  else if (lowerName.endsWith('.webp')) mimeType = 'image/webp';
+  else if (lowerName.endsWith('.gif')) mimeType = 'image/gif';
+
+  const base64Data = dataBuffer.toString('base64');
+
+  // Try each model in the hierarchy for vision
+  for (const modelName of MODEL_HIERARCHY) {
+    try {
+      console.log(`[Honey AI Vision] Attempting OCR with model: ${modelName}`);
+      const model = genAI.getGenerativeModel({ model: modelName });
+
+      const result = await model.generateContent([
+        {
+          inlineData: {
+            mimeType: mimeType,
+            data: base64Data
+          }
+        },
+        {
+          text: `You are an expert OCR and document reader. Extract ALL readable text content from this document/image. 
+Include every heading, paragraph, caption, label, code snippet, table data, and footnote you can see.
+Return ONLY the extracted text, nothing else. No commentary, no formatting instructions.
+If the document contains diagrams or charts, describe what they show briefly.
+Extract as much text as humanly possible.`
+        }
+      ]);
+
+      const response = await result.response;
+      const text = response.text();
+      console.log(`[Honey AI Vision] ✅ OCR success with ${modelName}, extracted ${text.length} chars`);
+      return text;
+    } catch (err) {
+      console.warn(`[Honey AI Vision] ${modelName} failed:`, err.message);
+    }
+  }
+
+  throw new Error('All Vision models failed to extract text');
+}
+
+/**
+ * Core AI Analysis Pipeline — takes extracted text and generates
+ * Summary, Key Terms, Topics, Content Validation, and Quiz.
+ * Reusable by both standard extraction and Vision OCR fallback paths.
+ */
+async function runAIPipeline(textContent, title) {
+  const truncated = textContent.substring(0, 100000);
 
   const aiPrompt = `
     You are an expert academic tutor and content validator for "StudyHive", a premium university learning platform.
@@ -166,7 +259,7 @@ const generateSmartSummary = async (filePath, title, originalName = '') => {
     
     Material Content:
     """
-    ${truncatedText}
+    ${truncated}
     """
   `;
 
@@ -181,7 +274,6 @@ const generateSmartSummary = async (filePath, title, originalName = '') => {
     
     quiz = quiz.filter(q => {
       const qText = q.question.toLowerCase();
-      // If the question is about the document processing itself, kill it
       const isMeta = forbiddenPatterns.some(p => p.test(qText));
       return !isMeta;
     });
@@ -204,7 +296,7 @@ const generateSmartSummary = async (filePath, title, originalName = '') => {
       aiQuiz: []
     };
   }
-};
+}
 
 module.exports = {
   generateSmartSummary,

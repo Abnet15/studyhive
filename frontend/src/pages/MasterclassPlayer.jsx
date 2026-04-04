@@ -23,13 +23,14 @@ const TeacherSelector = ({ onSelect }) => {
   const [customName, setCustomName] = useState('');
   const [customSpecialty, setCustomSpecialty] = useState('');
   const [customDesc, setCustomDesc] = useState('');
+  const [duration, setDuration] = useState(5);
 
   const handleStart = () => {
     if (customMode) {
       if (!customName.trim() || !customSpecialty.trim()) return;
-      onSelect({ id: 'custom', name: customName, emoji: '✨', tag: customSpecialty, desc: customDesc || `An expert in ${customSpecialty} who teaches everything deeply and clearly.` });
+      onSelect({ id: 'custom', name: customName, emoji: '✨', tag: customSpecialty, desc: customDesc || `An expert in ${customSpecialty} who teaches everything deeply and clearly.`, duration });
     } else if (selected) {
-      onSelect(selected);
+      onSelect({ ...selected, duration });
     }
   };
 
@@ -68,7 +69,23 @@ const TeacherSelector = ({ onSelect }) => {
           ))}
         </div>
 
-        <div className="flex justify-center mt-10">
+        {/* --- Duration Selector UI --- */}
+        <div className="mb-10 text-center">
+          <h3 className="text-xl font-bold mb-4 text-slate-700 dark:text-slate-300">Select Teaching Time</h3>
+          <div className="flex justify-center gap-3">
+            {[5, 10, 15].map(time => (
+               <button
+                 key={time}
+                 onClick={() => setDuration(time)}
+                 className={`px-6 py-3 rounded-2xl font-bold transition-all border ${duration === time ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30' : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10'}`}
+               >
+                 {time} Minutes
+               </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-center">
           <motion.button onClick={handleStart} disabled={!selected && !customMode} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="px-12 py-5 rounded-3xl bg-indigo-600 text-white font-black text-lg shadow-xl disabled:opacity-20 flex items-center gap-3">
              <Play className="w-6 h-6"/> Start Synthesis
           </motion.button>
@@ -201,7 +218,7 @@ const MasterclassPlayer = () => {
   const handleProfessorSelect = async (prof) => {
     setProfessor(prof); setLoading(true); setError('');
     try {
-      const response = await apiClient.post('/ai/public-masterclass', { materialId: id, teacherPersona: { id: prof.id, name: prof.name, tag: prof.tag, desc: prof.desc } });
+      const response = await apiClient.post('/ai/public-masterclass', { materialId: id, teacherPersona: { id: prof.id, name: prof.name, tag: prof.tag, desc: prof.desc }, duration: typeof prof.duration === 'number' ? prof.duration : 5 });
       setData(response);
     } catch (err) { setError(err.message || 'Failed to initialize the AI Masterclass.'); }
     finally { setLoading(false); }

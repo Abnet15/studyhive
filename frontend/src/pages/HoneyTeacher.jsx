@@ -153,6 +153,7 @@ const HoneyTeacher = () => {
   const [selectedChoice, setSelectedChoice] = useState(null);
   const [waitingForAnswer, setWaitingForAnswer] = useState(false);
   const [profMood, setProfMood] = useState('neutral');
+  const [duration, setDuration] = useState(5);
 
   const synthRef = useRef(window.speechSynthesis);
   const progressRef = useRef(null);
@@ -169,7 +170,7 @@ const HoneyTeacher = () => {
       const res = await fetch(`${API_BASE}/ai/public-masterclass`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, teacherPersona: prof }),
+        body: JSON.stringify({ topic, teacherPersona: prof, duration }),
       });
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const json = await res.json();
@@ -324,6 +325,18 @@ const HoneyTeacher = () => {
                       </div>
                     </div>
                   )}
+                </div>
+
+                {/* Duration Selector */}
+                <div className="text-center space-y-3">
+                  <div className="text-sm font-black uppercase tracking-widest text-slate-600">Teaching Duration</div>
+                  <div className="flex justify-center gap-3">
+                    {[5, 10, 15].map(t => (
+                      <button key={t} onClick={() => setDuration(t)}
+                        className={`px-5 py-2.5 rounded-2xl font-bold text-sm transition-all border ${duration === t ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/30' : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10'}`}
+                      >{t} min</button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Start button */}

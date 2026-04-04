@@ -83,7 +83,7 @@ exports.chat = async (req, res, next) => {
 
 exports.generateMasterclass = async (req, res, next) => {
   try {
-    const { topic, materialId, teacherPersona } = req.body;
+    const { topic, materialId, teacherPersona, duration } = req.body;
     
     let resolvedTopic = topic;
     let contentSnippet = '';
@@ -100,7 +100,7 @@ exports.generateMasterclass = async (req, res, next) => {
 
     if (!resolvedTopic) throw new ApiError(400, 'Topic or valid materialId is required to generate a Masterclass lesson');
 
-    const data = await geminiService.generateMasterclass(resolvedTopic, contentSnippet, teacherPersona);
+    const data = await geminiService.generateMasterclass(resolvedTopic, contentSnippet, teacherPersona, duration);
     res.json({ ...data, topic: resolvedTopic });
   } catch (err) {
     next(new ApiError(500, err.message));
