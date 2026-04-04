@@ -290,8 +290,9 @@ ${contextText || 'General Job Interview'}
 Your goals:
 1. Ask behavioral and technical questions relevant to the context.
 2. Listen to the user's response, evaluate it, and ask follow-up questions organically.
-3. Keep your responses concise (1-3 sentences max) because this is a real-time voice call. Do not use markdown like asterisks or bold text, just plain conversational English.
-4. If they ask you for feedback, give them constructive feedback on their performance.`;
+3. Keep your responses concise (1-3 sentences max) because this is a real-time voice call. Do not use markdown like asterisks or bold text, just plain conversational text.
+4. IMPORTANT LANGUAGE RULE: You MUST speak in the exact language the user requests in their CONTEXT block. If they request Amharic, you MUST output pure Amharic script (አማርኛ) and speak idiomatically like a native Ethiopian interviewer. Do not use English phrases if Amharic is requested.
+5. If they ask you for feedback, give them constructive feedback on their performance.`;
     } else {
       systemInstruction = `You are a friendly, native English-speaking conversation partner helping the user practice their English fluency and conversational skills.
 USER LEARNING GOALS/CONTEXT:
@@ -301,7 +302,7 @@ ${contextText || 'General English Practice'}
 Your goals:
 1. Have a natural, flowing conversation. Ask engaging questions about their day, interests, or the provided context.
 2. Gently and warmly correct major grammatical mistakes if they make them, but prioritize keeping the conversation fun.
-3. Keep your responses very brief (1-3 sentences max) like a real voice call. Do not use markdown syntax, only plain spoken English.`;
+3. Keep your responses very brief (1-3 sentences max) like a real voice call. Do not use markdown syntax, only plain spoken text.`;
     }
 
     // Format history for Gemini

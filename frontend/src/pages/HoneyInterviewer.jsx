@@ -283,6 +283,11 @@ const HoneyInterviewer = () => {
                     <option value="Spanish">Spanish</option>
                     <option value="German">German</option>
                   </select>
+                  {language === 'Amharic' && (
+                    <p className="text-[10px] text-emerald-400 mt-2 font-bold">
+                      * Tip: For the most realistic Ethiopian voice, use Microsoft Edge.
+                    </p>
+                  )}
                 </div>
               )}
 
