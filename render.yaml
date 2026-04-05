@@ -13,7 +13,7 @@ services:
       - key: CLIENT_URL
         sync: false
       - key: MONGODB_URI
-        sync: false
+        value: "mongodb+srv://temesgenbekalu74_db_user:FI07LxFXSlImrnwq@cluster1.mj83gys.mongodb.net/studyhive?retryWrites=true&w=majority&appName=Cluster1"
       - key: JWT_SECRET
         sync: false
       - key: GEMINI_API_KEY
